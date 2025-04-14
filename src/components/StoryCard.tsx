@@ -108,7 +108,11 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
               <span>{story.time}</span>
             </div>
             
-            <Link to={`/item/${story.id}`} className="flex items-center gap-1 hover:text-hn-orange">
+            <Link 
+              to={`/item/${story.id}`} 
+              className="flex items-center gap-1 hover:text-hn-orange"
+              aria-label={`View ${story.commentsCount} comments`}
+            >
               <MessageSquare className="h-3.5 w-3.5" />
               <span>{story.commentsCount} comments</span>
             </Link>

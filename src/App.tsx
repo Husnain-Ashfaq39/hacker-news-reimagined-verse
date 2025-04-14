@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Comments from "./pages/Comments";
 import NotFound from "./pages/NotFound";
 
 // Create a new QueryClient instance
@@ -22,7 +22,7 @@ const App = () => (
           <Route path="/ask" element={<Index />} />
           <Route path="/show" element={<Index />} />
           <Route path="/jobs" element={<Index />} />
-          <Route path="/item/:id" element={<Index />} />
+          <Route path="/item/:id" element={<Comments />} />
           <Route path="/user/:username" element={<Index />} />
           <Route path="/from/:domain" element={<Index />} />
           <Route path="/tag/:tag" element={<Index />} />

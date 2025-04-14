@@ -14,6 +14,18 @@ export interface HNStory {
   type: string;
 }
 
+export interface HNComment {
+  id: number;
+  by: string;
+  time: number;
+  text: string;
+  kids?: number[];
+  parent: number;
+  type: string;
+  deleted?: boolean;
+  dead?: boolean;
+}
+
 export interface HNUser {
   id: string;      // username
   created: number; // UNIX timestamp
@@ -33,6 +45,17 @@ export interface Story {
   commentsCount: number;
   preview?: string;
   tags?: string[];
+}
+
+export interface Comment {
+  id: number;
+  user: string;
+  time: string;
+  text: string;
+  level: number;
+  kids?: Comment[];
+  deleted?: boolean;
+  dead?: boolean;
 }
 
 /**
@@ -64,6 +87,99 @@ export const fetchItem = async (id: number): Promise<HNStory | null> => {
   } catch (error) {
     console.error(`Error fetching item ${id}:`, error);
     return null;
+  }
+};
+
+/**
+ * Fetch a comment by ID
+ */
+export const fetchComment = async (id: number): Promise<HNComment | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/item/${id}.json`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch comment ${id}`);
+    }
+    const comment = await response.json();
+    
+    // Check if it's a valid comment
+    if (!comment || comment.type !== 'comment') {
+      return null;
+    }
+    
+    return comment;
+  } catch (error) {
+    console.error(`Error fetching comment ${id}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Fetch all comments for a story recursively
+ */
+export const fetchComments = async (commentIds: number[] = [], level = 0): Promise<Comment[]> => {
+  if (!commentIds || commentIds.length === 0) {
+    return [];
+  }
+  
+  try {
+    const commentPromises = commentIds.map(id => fetchComment(id));
+    const comments = await Promise.all(commentPromises);
+    
+    // Filter out null comments and process the valid ones
+    const validComments = comments
+      .filter((comment): comment is HNComment => 
+        comment !== null && 
+        !comment.deleted && 
+        !comment.dead
+      );
+    
+    // Process each comment and fetch its children recursively
+    const processedComments = await Promise.all(
+      validComments.map(async comment => {
+        const formattedComment: Comment = {
+          id: comment.id,
+          user: comment.by,
+          time: formatRelativeTime(comment.time),
+          text: comment.text || '',
+          level: level,
+          deleted: comment.deleted,
+          dead: comment.dead
+        };
+        
+        // Fetch child comments if any
+        if (comment.kids && comment.kids.length > 0) {
+          formattedComment.kids = await fetchComments(comment.kids, level + 1);
+        }
+        
+        return formattedComment;
+      })
+    );
+    
+    return processedComments;
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    return [];
+  }
+};
+
+/**
+ * Fetch a story with its comments
+ */
+export const fetchStoryWithComments = async (id: number): Promise<{ story: Story | null; comments: Comment[] }> => {
+  try {
+    const hnStory = await fetchItem(id);
+    
+    if (!hnStory) {
+      return { story: null, comments: [] };
+    }
+    
+    const story = hnStoryToStory(hnStory);
+    const comments = await fetchComments(hnStory.kids || []);
+    
+    return { story, comments };
+  } catch (error) {
+    console.error(`Error fetching story with comments for ID ${id}:`, error);
+    return { story: null, comments: [] };
   }
 };
 

@@ -99,7 +99,11 @@ export function PromotedStory({ story }: PromotedStoryProps) {
               
               <div>{story.time}</div>
               
-              <Link to={`/item/${story.id}`} className="hover:text-hn-orange">
+              <Link 
+                to={`/item/${story.id}`} 
+                className="hover:text-hn-orange flex items-center"
+                aria-label={`View ${story.commentsCount} comments`}
+              >
                 <MessageSquare className="inline h-4 w-4 mr-1" />
                 {story.commentsCount} comments
               </Link>
