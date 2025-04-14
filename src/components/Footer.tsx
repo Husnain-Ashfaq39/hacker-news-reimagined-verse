@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { GitHub, Twitter } from "lucide-react";
+import { Github, Twitter } from "lucide-react";
 
 export function Footer() {
   return (
@@ -50,7 +50,7 @@ export function Footer() {
                     href="#" 
                     className="text-muted-foreground hover:text-hn-orange inline-flex items-center gap-2"
                   >
-                    <GitHub className="h-4 w-4" />
+                    <Github className="h-4 w-4" />
                     <span>GitHub</span>
                   </a>
                 </li>
