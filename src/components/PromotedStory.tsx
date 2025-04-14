@@ -90,7 +90,7 @@ export function PromotedStory({ story }: PromotedStoryProps) {
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <div>
                 <span className="text-foreground">Posted by </span>
-                <UserTooltip username={story.user}>
+                <UserTooltip username={story.user} position="top">
                   <Link to={`/user/${story.user}`} className="hover:text-hn-orange font-medium">
                     {story.user}
                   </Link>

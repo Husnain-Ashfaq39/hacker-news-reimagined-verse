@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, useRef } from "react";
 import { Link } from "react-router-dom";
 import { User, Calendar, Award, FileText } from "lucide-react";
 import { fetchUser, formatDate, HNUser } from "@/services/hnService";
@@ -6,14 +6,19 @@ import { fetchUser, formatDate, HNUser } from "@/services/hnService";
 interface UserTooltipProps {
   username: string;
   children: ReactNode;
+  position?: "top" | "bottom" | "auto";
 }
 
-export function UserTooltip({ username, children }: UserTooltipProps) {
+export function UserTooltip({ username, children, position = "auto" }: UserTooltipProps) {
   const [userData, setUserData] = useState<HNUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [tooltipTimeout, setTooltipTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">("bottom");
+  
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   const loadUserData = async () => {
     if (userData || loading) return;
@@ -32,6 +37,28 @@ export function UserTooltip({ username, children }: UserTooltipProps) {
     }
   };
 
+  // Calculate optimal position for tooltip
+  const calculatePosition = () => {
+    if (position !== "auto") {
+      setTooltipPosition(position);
+      return;
+    }
+    
+    if (!triggerRef.current) return;
+    
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const tooltipHeight = 200; // Approximate height of tooltip
+    
+    // If there's not enough space below, show tooltip above
+    if (spaceBelow < tooltipHeight && triggerRect.top > tooltipHeight) {
+      setTooltipPosition("top");
+    } else {
+      setTooltipPosition("bottom");
+    }
+  };
+
   const handleMouseEnter = () => {
     if (tooltipTimeout) {
       clearTimeout(tooltipTimeout);
@@ -40,6 +67,7 @@ export function UserTooltip({ username, children }: UserTooltipProps) {
     
     // Start loading user data
     loadUserData();
+    calculatePosition();
     
     // Show tooltip after a small delay to prevent flickering on quick mouse movements
     const timeout = setTimeout(() => {
@@ -75,6 +103,7 @@ export function UserTooltip({ username, children }: UserTooltipProps) {
   return (
     <div className="relative inline-block">
       <div 
+        ref={triggerRef}
         className="inline-block"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -84,11 +113,21 @@ export function UserTooltip({ username, children }: UserTooltipProps) {
       
       {isVisible && (
         <div 
-          className="absolute z-50 mt-2 -left-4"
+          ref={tooltipRef}
+          className={`fixed z-[100] ${tooltipPosition === "top" ? "bottom-0 mb-2" : "top-0 mt-2"}`}
+          style={{
+            left: triggerRef.current ? triggerRef.current.getBoundingClientRect().left - 10 + "px" : "0",
+            [tooltipPosition === "top" ? "bottom" : "top"]: 
+              triggerRef.current 
+                ? (tooltipPosition === "top" 
+                    ? window.innerHeight - triggerRef.current.getBoundingClientRect().top + 5
+                    : triggerRef.current.getBoundingClientRect().bottom + 5) + "px"
+                : "0"
+          }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="bg-card shadow-lg rounded-lg border p-4 w-64">
+          <div className="bg-card shadow-lg rounded-lg border p-4 w-64 max-w-xs">
             {loading ? (
               <div className="flex items-center justify-center py-4">
                 <div className="h-5 w-5 border-2 border-hn-orange border-t-transparent rounded-full animate-spin"></div>
