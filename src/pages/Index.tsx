@@ -5,6 +5,8 @@ import { StoryCard } from "@/components/StoryCard";
 import { TrendingTags } from "@/components/TrendingTags";
 import { PromotedStory } from "@/components/PromotedStory";
 import { fetchStoryIds, fetchStories, Story } from "@/services/hnService";
+import { UserTooltip } from "@/components/UserTooltip";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [filter, setFilter] = useState("all");
@@ -14,6 +16,11 @@ const Index = () => {
   const [promotedStory, setPromotedStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Top contributors - in a real app, these would be dynamically fetched
+  const topContributors = [
+    "pg", "dang", "tptacek", "patio11", "jacquesm"
+  ];
   
   useEffect(() => {
     const fetchData = async () => {
@@ -153,15 +160,22 @@ const Index = () => {
             <div className="bg-card rounded-lg border p-4">
               <h3 className="font-medium mb-3">Top Contributors</h3>
               <div className="space-y-3">
-                {["innovator", "techguru", "startupfounder", "codemaster", "airesearcher"].map((user, index) => (
+                {topContributors.map((user, index) => (
                   <div key={user} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-hn-orange/10 text-hn-orange rounded-full flex items-center justify-center font-medium">
                         {user.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-medium text-sm">{user}</div>
-                        <div className="text-xs text-muted-foreground">{5000 - index * 632} karma</div>
+                        <UserTooltip username={user}>
+                          <Link to={`/user/${user}`} className="font-medium text-sm hover:text-hn-orange">
+                            {user}
+                          </Link>
+                        </UserTooltip>
+                        <div className="text-xs text-muted-foreground">
+                          {/* Karma will be loaded in the tooltip */}
+                          Top contributor
+                        </div>
                       </div>
                     </div>
                     <div className="text-xs bg-muted px-2 py-1 rounded-full">

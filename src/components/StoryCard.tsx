@@ -1,9 +1,9 @@
-
 import { Link } from "react-router-dom";
 import { ExternalLink, MessageSquare, ArrowUp, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { UserTooltip } from "@/components/UserTooltip";
 
 interface StoryCardProps {
   story: {
@@ -96,9 +96,11 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
           )}>
             <div className="flex items-center gap-1">
               <User className="h-3.5 w-3.5" />
-              <Link to={`/user/${story.user}`} className="hover:text-hn-orange">
-                {story.user}
-              </Link>
+              <UserTooltip username={story.user}>
+                <Link to={`/user/${story.user}`} className="hover:text-hn-orange">
+                  {story.user}
+                </Link>
+              </UserTooltip>
             </div>
             
             <div className="flex items-center gap-1">

@@ -14,6 +14,14 @@ export interface HNStory {
   type: string;
 }
 
+export interface HNUser {
+  id: string;      // username
+  created: number; // UNIX timestamp
+  karma: number;
+  submitted?: number[]; // IDs of stories/comments submitted
+  about?: string;  // user's bio/description
+}
+
 export interface Story {
   id: number;
   title: string;
@@ -55,6 +63,23 @@ export const fetchItem = async (id: number): Promise<HNStory | null> => {
     return await response.json();
   } catch (error) {
     console.error(`Error fetching item ${id}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Fetch user data by username
+ */
+export const fetchUser = async (username: string): Promise<HNUser | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/user/${username}.json`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user ${username}`);
+    }
+    const userData = await response.json();
+    return userData;
+  } catch (error) {
+    console.error(`Error fetching user ${username}:`, error);
     return null;
   }
 };
@@ -107,6 +132,18 @@ export const formatRelativeTime = (timestamp: number): string => {
   
   const date = new Date(timestamp * 1000);
   return date.toLocaleDateString();
+};
+
+/**
+ * Format timestamp to date
+ */
+export const formatDate = (timestamp: number): string => {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 };
 
 /**

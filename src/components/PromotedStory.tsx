@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ExternalLink, MessageSquare, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { UserTooltip } from "@/components/UserTooltip";
 
 interface PromotedStoryProps {
   story: {
@@ -89,9 +90,11 @@ export function PromotedStory({ story }: PromotedStoryProps) {
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <div>
                 <span className="text-foreground">Posted by </span>
-                <Link to={`/user/${story.user}`} className="hover:text-hn-orange font-medium">
-                  {story.user}
-                </Link>
+                <UserTooltip username={story.user}>
+                  <Link to={`/user/${story.user}`} className="hover:text-hn-orange font-medium">
+                    {story.user}
+                  </Link>
+                </UserTooltip>
               </div>
               
               <div>{story.time}</div>
