@@ -68,7 +68,7 @@ export function MainNav() {
       
       {/* Mobile menu */}
       <div className={cn(
-        "md:hidden fixed inset-0 top-16 bg-background border-t z-40 transition-transform duration-300 ease-in-out",
+        "md:hidden fixed inset-0 top-16 z-40 transition-transform duration-300 ease-in-out bg-background border-t",
         isMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="container py-4 flex flex-col gap-4">
@@ -82,34 +82,61 @@ export function MainNav() {
           </div>
           
           <nav className="flex flex-col gap-1">
-            <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted">
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <TrendingUp className="h-4 w-4" />
               <span>Top Stories</span>
             </Link>
-            <Link to="/newest" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted">
+            <Link 
+              to="/newest" 
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <Terminal className="h-4 w-4" />
               <span>New Stories</span>
             </Link>
-            <Link to="/ask" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted">
+            <Link 
+              to="/ask" 
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <Users className="h-4 w-4" />
               <span>Ask HN</span>
             </Link>
-            <Link to="/show" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted">
+            <Link 
+              to="/show" 
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <Coffee className="h-4 w-4" />
               <span>Show HN</span>
             </Link>
-            <Link to="/jobs" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted">
+            <Link 
+              to="/jobs" 
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <BarChart className="h-4 w-4" />
               <span>Jobs</span>
             </Link>
-            <Link to="/saved" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted">
+            <Link 
+              to="/saved" 
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <Bookmark className="h-4 w-4" />
               <span>Saved</span>
             </Link>
           </nav>
           
           <div className="mt-auto pt-4 border-t">
-            <Button className="w-full bg-hn-orange hover:bg-hn-orange/90">
+            <Button 
+              className="w-full bg-hn-orange hover:bg-hn-orange/90"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Sign In
             </Button>
           </div>
