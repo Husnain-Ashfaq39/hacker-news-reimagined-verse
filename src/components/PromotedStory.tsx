@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { ExternalLink, MessageSquare, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ interface PromotedStoryProps {
     user: string;
     time: string;
     commentsCount: number;
-    preview: string;
+    preview?: string;
     image?: string;
     tags?: string[];
   };
@@ -83,7 +82,9 @@ export function PromotedStory({ story }: PromotedStoryProps) {
               )}
             </div>
             
-            <p className="text-muted-foreground">{story.preview}</p>
+            {story.preview && (
+              <p className="text-muted-foreground">{story.preview}</p>
+            )}
             
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <div>

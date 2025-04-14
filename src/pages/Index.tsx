@@ -1,28 +1,85 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageLayout } from "@/components/PageLayout";
 import { FilterBar } from "@/components/FilterBar";
 import { StoryCard } from "@/components/StoryCard";
 import { TrendingTags } from "@/components/TrendingTags";
 import { PromotedStory } from "@/components/PromotedStory";
-import { mockStories, promotedStory } from "@/data/mockData";
+import { fetchStoryIds, fetchStories, Story } from "@/services/hnService";
 
 const Index = () => {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("top");
   const [timeRange, setTimeRange] = useState("today");
+  const [stories, setStories] = useState<Story[]>([]);
+  const [promotedStory, setPromotedStory] = useState<Story | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Filter stories based on the selected filter
-  const filterStories = () => {
-    if (filter === "all") return mockStories;
-    if (filter === "articles") return mockStories.filter(story => story.url && !story.title.startsWith("Show HN") && !story.title.startsWith("Ask HN"));
-    if (filter === "discussions") return mockStories.filter(story => !story.url);
-    if (filter === "show") return mockStories.filter(story => story.title.startsWith("Show HN"));
-    if (filter === "ask") return mockStories.filter(story => story.title.startsWith("Ask HN"));
-    return mockStories;
-  };
-  
-  const filteredStories = filterStories();
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Determine which story type to fetch based on filter and sort
+        let storyType: 'top' | 'new' | 'best' | 'ask' | 'show' | 'job' = 'top';
+        
+        if (sort === 'top') storyType = 'top';
+        else if (sort === 'new') storyType = 'new';
+        else if (sort === 'best') storyType = 'best';
+        
+        // Fetch appropriate story IDs
+        let ids: number[] = [];
+        
+        if (filter === 'ask') {
+          ids = await fetchStoryIds('ask');
+        } else if (filter === 'show') {
+          ids = await fetchStoryIds('show');
+        } else if (filter === 'jobs') {
+          ids = await fetchStoryIds('job');
+        } else {
+          ids = await fetchStoryIds(storyType);
+        }
+        
+        // Fetch the full story data for the IDs
+        const fetchedStories = await fetchStories(ids, 20);
+        
+        // Additional filtering if needed
+        let filteredStories = fetchedStories;
+        
+        if (filter === 'articles') {
+          filteredStories = fetchedStories.filter(
+            story => story.url && 
+            !story.title.startsWith('Show HN:') && 
+            !story.title.startsWith('Ask HN:')
+          );
+        } else if (filter === 'discussions') {
+          filteredStories = fetchedStories.filter(
+            story => !story.url || 
+            story.title.startsWith('Ask HN:')
+          );
+        }
+        
+        // Set the first story as promoted if available
+        if (filteredStories.length > 0) {
+          setPromotedStory(filteredStories[0]);
+          setStories(filteredStories.slice(1));
+        } else {
+          setPromotedStory(null);
+          setStories([]);
+        }
+      } catch (err) {
+        console.error('Error fetching stories:', err);
+        setError('Failed to fetch stories. Please try again later.');
+        setStories([]);
+        setPromotedStory(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [filter, sort, timeRange]);
   
   return (
     <PageLayout>
@@ -35,19 +92,42 @@ const Index = () => {
               onTimeChange={setTimeRange}
             />
             
-            <PromotedStory story={promotedStory} />
-            
-            <div className="space-y-4">
-              {filteredStories.map(story => (
-                <StoryCard key={story.id} story={story} />
-              ))}
-            </div>
-            
-            <div className="flex justify-center mt-8">
-              <button className="px-4 py-2 bg-secondary hover:bg-secondary/70 rounded-md text-sm font-medium transition-colors">
-                Load More
-              </button>
-            </div>
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-hn-orange border-r-transparent" role="status">
+                  <span className="sr-only">Loading...</span>
+                </div>
+                <p className="mt-4 text-muted-foreground">Loading stories...</p>
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+                {error}
+              </div>
+            ) : (
+              <>
+                {promotedStory && <PromotedStory story={promotedStory} />}
+                
+                <div className="space-y-4">
+                  {stories.map(story => (
+                    <StoryCard key={story.id} story={story} />
+                  ))}
+                </div>
+                
+                {stories.length > 0 && (
+                  <div className="flex justify-center mt-8">
+                    <button className="px-4 py-2 bg-secondary hover:bg-secondary/70 rounded-md text-sm font-medium transition-colors">
+                      Load More
+                    </button>
+                  </div>
+                )}
+                
+                {stories.length === 0 && !loading && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No stories found with current filters.
+                  </div>
+                )}
+              </>
+            )}
           </div>
           
           <div className="space-y-6">
