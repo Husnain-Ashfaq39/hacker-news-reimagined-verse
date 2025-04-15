@@ -9,7 +9,6 @@ import { UserTooltip } from "@/components/UserTooltip";
 import { Link } from "react-router-dom";
 
 const Index = () => {
-  const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("top");
   const [timeRange, setTimeRange] = useState("today");
   const [stories, setStories] = useState<Story[]>([]);
@@ -28,49 +27,22 @@ const Index = () => {
       setError(null);
       
       try {
-        // Determine which story type to fetch based on filter and sort
-        let storyType: 'top' | 'new' | 'best' | 'ask' | 'show' | 'job' = 'top';
+        // Determine which story type to fetch based on sort
+        let storyType: 'top' | 'new' = 'top';
         
         if (sort === 'top') storyType = 'top';
         else if (sort === 'new') storyType = 'new';
-        else if (sort === 'best') storyType = 'best';
         
         // Fetch appropriate story IDs
-        let ids: number[] = [];
-        
-        if (filter === 'ask') {
-          ids = await fetchStoryIds('ask');
-        } else if (filter === 'show') {
-          ids = await fetchStoryIds('show');
-        } else if (filter === 'jobs') {
-          ids = await fetchStoryIds('job');
-        } else {
-          ids = await fetchStoryIds(storyType);
-        }
+        const ids = await fetchStoryIds(storyType);
         
         // Fetch the full story data for the IDs
         const fetchedStories = await fetchStories(ids, 20);
         
-        // Additional filtering if needed
-        let filteredStories = fetchedStories;
-        
-        if (filter === 'articles') {
-          filteredStories = fetchedStories.filter(
-            story => story.url && 
-            !story.title.startsWith('Show HN:') && 
-            !story.title.startsWith('Ask HN:')
-          );
-        } else if (filter === 'discussions') {
-          filteredStories = fetchedStories.filter(
-            story => !story.url || 
-            story.title.startsWith('Ask HN:')
-          );
-        }
-        
         // Set the first story as promoted if available
-        if (filteredStories.length > 0) {
-          setPromotedStory(filteredStories[0]);
-          setStories(filteredStories.slice(1));
+        if (fetchedStories.length > 0) {
+          setPromotedStory(fetchedStories[0]);
+          setStories(fetchedStories.slice(1));
         } else {
           setPromotedStory(null);
           setStories([]);
@@ -86,7 +58,7 @@ const Index = () => {
     };
     
     fetchData();
-  }, [filter, sort, timeRange]);
+  }, [sort, timeRange]);
   
   return (
     <PageLayout>
@@ -94,7 +66,7 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <FilterBar 
-              onFilterChange={setFilter}
+              onFilterChange={() => {}} // Empty function since we're not using filters anymore
               onSortChange={setSort}
               onTimeChange={setTimeRange}
             />

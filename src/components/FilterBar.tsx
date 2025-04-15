@@ -1,5 +1,4 @@
-
-import { ChevronDown, Filter, TrendingUp, Clock, ThumbsUp } from "lucide-react";
+import { ChevronDown, Filter, Clock, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 
 interface FilterBarProps {
   onFilterChange: (filter: string) => void;
@@ -43,18 +41,9 @@ export function FilterBar({
     onTimeChange(time);
   };
   
-  const filters = [
-    { id: "all", label: "All" },
-    { id: "articles", label: "Articles" },
-    { id: "discussions", label: "Discussions" },
-    { id: "show", label: "Show HN" },
-    { id: "ask", label: "Ask HN" },
-  ];
-  
   const sortOptions = [
     { id: "top", label: "Top", icon: <ThumbsUp className="h-4 w-4 mr-2" /> },
-    { id: "trending", label: "Trending", icon: <TrendingUp className="h-4 w-4 mr-2" /> },
-    { id: "newest", label: "Newest", icon: <Clock className="h-4 w-4 mr-2" /> },
+    { id: "new", label: "New", icon: <Clock className="h-4 w-4 mr-2" /> },
   ];
   
   const timeFilters = [
@@ -82,7 +71,7 @@ export function FilterBar({
                 size="sm" 
                 className="flex items-center text-xs h-8"
               >
-                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+                <ThumbsUp className="h-3.5 w-3.5 mr-1.5" />
                 {sortOptions.find(s => s.id === activeSort)?.label}
                 <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
               </Button>
@@ -127,24 +116,6 @@ export function FilterBar({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
-      
-      <div className="flex flex-wrap gap-2">
-        {filters.map(filter => (
-          <Badge
-            key={filter.id}
-            variant={activeFilter === filter.id ? "default" : "outline"}
-            className={cn(
-              "cursor-pointer text-xs px-3 py-1",
-              activeFilter === filter.id ? 
-                "bg-hn-orange hover:bg-hn-orange/90" : 
-                "hover:bg-secondary"
-            )}
-            onClick={() => handleFilterChange(filter.id)}
-          >
-            {filter.label}
-          </Badge>
-        ))}
       </div>
     </div>
   );
