@@ -127,7 +127,7 @@ const Index = () => {
               </div>
             </div>
             
-            <TrendingTags />
+            <TrendingTags stories={stories} />
             
             <div className="bg-card rounded-lg border p-4">
               <h3 className="font-medium mb-3">Top Contributors</h3>

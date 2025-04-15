@@ -300,4 +300,176 @@ export const hnStoryToStory = (hnStory: HNStory): Story => {
     preview: hnStory.text ? hnStory.text.substring(0, 180) + (hnStory.text.length > 180 ? '...' : '') : undefined,
     tags: tags.length > 0 ? tags : undefined
   };
-}; 
+};
+
+// Add this new function to extract and count tags from stories
+export function extractTrendingTags(stories: Story[]): { name: string; count: number }[] {
+  // Create a map to count tag occurrences
+  const tagCounts = new Map<string, number>();
+  
+  // Process each story to extract tags
+  stories.forEach(story => {
+    // Extract tags from the story's tags property if available
+    if (story.tags && story.tags.length > 0) {
+      story.tags.forEach(tag => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 3); // Give higher weight to explicit tags
+      });
+    }
+    
+    // Extract potential tags from the title and URL
+    const titleWords = story.title.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+    const domainWords = story.domain ? story.domain.toLowerCase().split(/\W+/).filter(w => w.length > 2) : [];
+    
+    // Common tech terms that might be tags - expanded list
+    const techTerms = [
+      // Programming languages
+      'javascript', 'typescript', 'python', 'java', 'kotlin', 'swift', 'c++', 'csharp', 'c#',
+      'go', 'golang', 'rust', 'ruby', 'php', 'perl', 'scala', 'haskell', 'erlang', 'elixir',
+      'dart', 'lua', 'julia', 'r', 'matlab', 'cobol', 'fortran', 'assembly', 'webassembly',
+      'wasm', 'solidity', 'objective-c', 'lisp', 'clojure', 'groovy',
+      
+      // Frontend
+      'react', 'vue', 'angular', 'svelte', 'jquery', 'backbone', 'ember', 'nextjs', 'nuxt',
+      'gatsby', 'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'material-ui',
+      'chakra-ui', 'storybook', 'figma', 'sketch', 'framer', 'pwa', 'responsive',
+      
+      // Backend
+      'node', 'express', 'django', 'flask', 'fastapi', 'rails', 'spring', 'laravel', 'symfony',
+      'nestjs', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'webapp',
+      
+      // Data & ML
+      'ai', 'ml', 'machine learning', 'deep learning', 'neural network', 'tensorflow',
+      'pytorch', 'keras', 'hugging face', 'transformers', 'gpt', 'llm', 'nlp', 'computer vision',
+      'cv', 'reinforcement learning', 'rl', 'generative ai', 'gan', 'diffusion model',
+      'data science', 'big data', 'analytics', 'visualization', 'tableau', 'power bi',
+      'data mining', 'etl', 'data engineering', 'data warehouse',
+      
+      // Cloud & DevOps
+      'cloud', 'aws', 'azure', 'gcp', 'google cloud', 'digital ocean', 'heroku', 'netlify',
+      'vercel', 'docker', 'kubernetes', 'k8s', 'container', 'devops', 'ci/cd', 'github actions',
+      'gitlab', 'jenkins', 'terraform', 'ansible', 'chef', 'puppet', 'monitoring', 'logging',
+      'observability', 'prometheus', 'grafana', 'serverless',
+      
+      // Databases
+      'database', 'sql', 'nosql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch',
+      'cassandra', 'dynamodb', 'firebase', 'supabase', 'sqlite', 'oracle', 'mariadb',
+      'neo4j', 'graph database', 'time series', 'influxdb',
+      
+      // Web3 & Crypto
+      'blockchain', 'crypto', 'web3', 'bitcoin', 'ethereum', 'nft', 'token', 'defi',
+      'decentralized', 'dapp', 'dao', 'smart contract', 'wallet', 'solana', 'cardano',
+      
+      // Mobile
+      'mobile', 'ios', 'android', 'flutter', 'react native', 'pwa', 'swift', 'kotlin',
+      'xamarin', 'ionic', 'capacitor', 'cordova', 'native',
+      
+      // Security
+      'security', 'privacy', 'encryption', 'hacking', 'vulnerability', 'authentication',
+      'authorization', 'oauth', 'jwt', 'zero trust', 'pentest', 'bug bounty', 'infosec',
+      'cyber', 'ransomware',
+      
+      // OS & Systems
+      'linux', 'windows', 'macos', 'unix', 'ubuntu', 'debian', 'fedora', 'centos', 'redhat',
+      'embedded', 'raspberry pi', 'arduino', 'iot', 'rtos', 'kernel',
+      
+      // Gaming
+      'game development', 'gamedev', 'unity', 'unreal', 'godot', 'gaming', 'directx', 'opengl',
+      'vulkan', 'vr', 'ar', 'xr', 'metaverse', 'oculus', 'quest',
+      
+      // Business & Industry
+      'startup', 'funding', 'venture', 'vc', 'saas', 'software', 'entrepreneur', 'series a',
+      'fintech', 'medtech', 'healthtech', 'edtech', 'agritech', 'biotech', 'govtech',
+      'legaltech', 'proptech', 'insurtech', 'regtech',
+      
+      // Open Source
+      'open source', 'oss', 'github', 'gitlab', 'contribution', 'community', 'mozilla',
+      'apache', 'mit license', 'gpl',
+      
+      // Hacker News specific
+      'showhn', 'askhn', 'tellhn', 'yc', 'ycombinator', 'startup school'
+    ];
+    
+    // Expanded NLP approach
+    // 1. Check single word matches
+    titleWords.forEach(word => {
+      if (techTerms.includes(word)) {
+        tagCounts.set(word, (tagCounts.get(word) || 0) + 2);
+      }
+    });
+    
+    // 2. Check domain-specific keywords
+    domainWords.forEach(word => {
+      if (techTerms.includes(word)) {
+        tagCounts.set(word, (tagCounts.get(word) || 0) + 1);
+      }
+    });
+    
+    // 3. Check for multi-word tech terms
+    const titleLower = story.title.toLowerCase();
+    techTerms.forEach(term => {
+      if (term.includes(' ')) {
+        if (titleLower.includes(term)) {
+          // Give higher weight to multi-word matches as they're more specific
+          tagCounts.set(term, (tagCounts.get(term) || 0) + 4);
+        }
+      }
+    });
+    
+    // 4. Check for compound words (e.g., "machinelearning" instead of "machine learning")
+    techTerms.forEach(term => {
+      if (term.includes(' ')) {
+        const compoundTerm = term.replace(/\s+/g, '');
+        if (titleWords.includes(compoundTerm)) {
+          tagCounts.set(term, (tagCounts.get(term) || 0) + 3);
+        }
+      }
+    });
+    
+    // 5. Detect product-specific references
+    if (titleLower.includes('github') || story.domain?.includes('github.com')) {
+      tagCounts.set('github', (tagCounts.get('github') || 0) + 2);
+    }
+    
+    if (titleLower.match(/\bgpt-[34]\b/) || titleLower.includes('openai')) {
+      tagCounts.set('ai', (tagCounts.get('ai') || 0) + 2);
+      tagCounts.set('openai', (tagCounts.get('openai') || 0) + 3);
+    }
+  });
+  
+  // Apply some post-processing to improve quality
+  
+  // 1. Merge similar tags
+  const synonyms: {[key: string]: string} = {
+    'javascript': 'javascript',
+    'js': 'javascript',
+    'typescript': 'typescript',
+    'ts': 'typescript',
+    'react.js': 'react',
+    'reactjs': 'react',
+    'vue.js': 'vue',
+    'vuejs': 'vue',
+    'golang': 'go',
+    'ai': 'ai',
+    'machine learning': 'ml',
+    'machine-learning': 'ml',
+    'machinelearning': 'ml',
+    'deep learning': 'ml',
+    'kubernetes': 'k8s',
+    'blockchain': 'web3',
+    'ethereum': 'web3'
+  };
+  
+  // Create a new map for merged tags
+  const mergedTagCounts = new Map<string, number>();
+  
+  for (const [tag, count] of tagCounts.entries()) {
+    const normalizedTag = synonyms[tag] || tag;
+    mergedTagCounts.set(normalizedTag, (mergedTagCounts.get(normalizedTag) || 0) + count);
+  }
+  
+  // Convert the map to an array and sort by count (descending)
+  return Array.from(mergedTagCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15); // Return the top 15 tags
+} 
