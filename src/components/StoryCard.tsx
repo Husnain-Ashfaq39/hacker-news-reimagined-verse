@@ -49,11 +49,11 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
           </span>
         </div>
         
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-2 min-w-0">
           <div>
             <div className="flex items-start justify-between gap-2">
               <h3 className={cn(
-                "font-medium leading-tight",
+                "font-medium leading-tight break-words line-clamp-2",
                 isCompact ? "text-base" : "text-lg"
               )}>
                 <Link to={`/item/${story.id}`} className="hover:text-hn-orange transition-colors duration-200">
@@ -77,7 +77,7 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
             {story.domain && (
               <a 
                 href={`/from/${encodeURIComponent(story.domain)}`}
-                className="inline-block mt-1 text-xs text-muted-foreground hover:text-hn-orange"
+                className="inline-block mt-1 text-xs text-muted-foreground hover:text-hn-orange truncate max-w-full"
               >
                 {story.domain}
               </a>
@@ -86,7 +86,7 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
           
           {story.preview && (
             <div className="story-preview text-sm text-muted-foreground">
-              <p>{story.preview}</p>
+              <p className="line-clamp-2 break-words">{story.preview}</p>
             </div>
           )}
           
@@ -94,41 +94,46 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
             "flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground",
             isCompact ? "mt-1" : "mt-2"
           )}>
-            <div className="flex items-center gap-1">
-              <User className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1 min-w-0">
+              <User className="h-3.5 w-3.5 shrink-0" />
               <UserTooltip username={story.user}>
-                <Link to={`/user/${story.user}`} className="hover:text-hn-orange">
+                <Link to={`/user/${story.user}`} className="hover:text-hn-orange truncate">
                   {story.user}
                 </Link>
               </UserTooltip>
             </div>
             
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <Clock className="h-3.5 w-3.5" />
               <span>{story.time}</span>
             </div>
             
             <Link 
               to={`/item/${story.id}`} 
-              className="flex items-center gap-1 hover:text-hn-orange"
+              className="flex items-center gap-1 hover:text-hn-orange shrink-0"
               aria-label={`View ${story.commentsCount} comments`}
             >
               <MessageSquare className="h-3.5 w-3.5" />
-              <span>{story.commentsCount} comments</span>
+              <span>{story.commentsCount} <span className="hidden xs:inline">comments</span></span>
             </Link>
           </div>
           
           {story.tags && story.tags.length > 0 && !isCompact && (
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {story.tags.map(tag => (
+              {story.tags.slice(0, 3).map(tag => (
                 <Badge 
                   key={tag} 
                   variant="secondary" 
-                  className="text-xs bg-secondary/70 hover:bg-secondary"
+                  className="text-xs bg-secondary/70 hover:bg-secondary truncate max-w-[120px]"
                 >
                   {tag}
                 </Badge>
               ))}
+              {story.tags.length > 3 && 
+                <Badge variant="outline" className="text-xs">
+                  +{story.tags.length - 3}
+                </Badge>
+              }
             </div>
           )}
         </div>

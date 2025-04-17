@@ -4,6 +4,26 @@
 
 **URL**: https://lovable.dev/projects/4fe48e5b-580b-46dc-a72b-fc2b1a1146b2
 
+## Environment Variables
+
+This project uses environment variables for configuration. To set up the environment variables:
+
+1. Copy `.env.example` to `.env`:
+```sh
+cp .env.example .env
+```
+
+2. Customize the variables in the `.env` file according to your needs:
+```
+VITE_API_BASE_URL=https://hacker-news.firebaseio.com/v0
+```
+
+The following environment variables are available:
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| VITE_API_BASE_URL | Base URL for the Hacker News API | https://hacker-news.firebaseio.com/v0 |
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -32,7 +52,10 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Set up environment variables
+cp .env.example .env
+
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 

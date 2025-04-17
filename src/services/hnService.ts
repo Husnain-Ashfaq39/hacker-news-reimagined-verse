@@ -1,5 +1,5 @@
 // Hacker News API service
-const API_BASE_URL = 'https://hacker-news.firebaseio.com/v0';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface HNStory {
   id: number;
@@ -326,67 +326,143 @@ export function extractTrendingTags(stories: Story[]): { name: string; count: nu
       'javascript', 'typescript', 'python', 'java', 'kotlin', 'swift', 'c++', 'csharp', 'c#',
       'go', 'golang', 'rust', 'ruby', 'php', 'perl', 'scala', 'haskell', 'erlang', 'elixir',
       'dart', 'lua', 'julia', 'r', 'matlab', 'cobol', 'fortran', 'assembly', 'webassembly',
-      'wasm', 'solidity', 'objective-c', 'lisp', 'clojure', 'groovy',
+      'wasm', 'solidity', 'objective-c', 'lisp', 'clojure', 'groovy', 'ocaml', 'f#', 'nim',
+      'zig', 'crystal', 'reason', 'elm', 'purescript', 'coffeescript', 'bash', 'powershell',
       
       // Frontend
       'react', 'vue', 'angular', 'svelte', 'jquery', 'backbone', 'ember', 'nextjs', 'nuxt',
       'gatsby', 'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'material-ui',
-      'chakra-ui', 'storybook', 'figma', 'sketch', 'framer', 'pwa', 'responsive',
+      'chakra-ui', 'storybook', 'figma', 'sketch', 'framer', 'pwa', 'responsive', 'remix',
+      'vite', 'webpack', 'parcel', 'esbuild', 'rollup', 'qwik', 'astro', 'solid', 'alpine',
+      'preact', 'turbo', 'webcomponents', 'wasm', 'webgl', 'threejs', 'babylon', 'lit',
       
       // Backend
       'node', 'express', 'django', 'flask', 'fastapi', 'rails', 'spring', 'laravel', 'symfony',
-      'nestjs', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'webapp',
+      'nestjs', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'webapp', 'koa',
+      'hapi', 'sails', 'adonis', 'strapi', 'feathers', 'trpc', 'grpc', 'phoenix', 'vapor',
+      'actix', 'rocket', 'axum', 'aspnet', 'dotnet', 'gin', 'echo', 'fiber', 'quarkus',
+      'micronaut', 'ktor', 'fastify', 'tomcat', 'jetty', 'undertow', 'wildfly',
       
       // Data & ML
       'ai', 'ml', 'machine learning', 'deep learning', 'neural network', 'tensorflow',
       'pytorch', 'keras', 'hugging face', 'transformers', 'gpt', 'llm', 'nlp', 'computer vision',
       'cv', 'reinforcement learning', 'rl', 'generative ai', 'gan', 'diffusion model',
       'data science', 'big data', 'analytics', 'visualization', 'tableau', 'power bi',
-      'data mining', 'etl', 'data engineering', 'data warehouse',
+      'data mining', 'etl', 'data engineering', 'data warehouse', 'chatgpt', 'claude', 'anthropic',
+      'llama', 'mistral', 'gemini', 'stable diffusion', 'midjourney', 'dall-e', 'openai',
+      'langchain', 'llamaindex', 'rag', 'embeddings', 'vector database', 'pandas', 'numpy',
+      'jupyter', 'scikit-learn', 'scipy', 'matplotlib', 'seaborn', 'plotly', 'databricks',
+      'spark', 'hadoop', 'flink', 'airflow', 'dagster', 'kedro', 'mlops', 'vertex ai',
+      'sagemaker', 'azureml', 'onnx', 'xgboost', 'lightgbm', 'bert', 't5', 'palm', 'multimodal',
       
       // Cloud & DevOps
       'cloud', 'aws', 'azure', 'gcp', 'google cloud', 'digital ocean', 'heroku', 'netlify',
       'vercel', 'docker', 'kubernetes', 'k8s', 'container', 'devops', 'ci/cd', 'github actions',
       'gitlab', 'jenkins', 'terraform', 'ansible', 'chef', 'puppet', 'monitoring', 'logging',
-      'observability', 'prometheus', 'grafana', 'serverless',
+      'observability', 'prometheus', 'grafana', 'serverless', 'lambda', 'fargate', 'eks',
+      'ecs', 'gke', 'aks', 'argocd', 'helm', 'istio', 'envoy', 'linkerd', 'openshift',
+      'rancher', 'pulumi', 'cloudformation', 'datadog', 'new relic', 'splunk', 'cloudflare',
+      'fastly', 'cdn', 'edge', 'fly.io', 'railway', 'render', 'koyeb', 'platform engineering',
       
       // Databases
       'database', 'sql', 'nosql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch',
       'cassandra', 'dynamodb', 'firebase', 'supabase', 'sqlite', 'oracle', 'mariadb',
-      'neo4j', 'graph database', 'time series', 'influxdb',
+      'neo4j', 'graph database', 'time series', 'influxdb', 'cockroachdb', 'singlestore',
+      'planetscale', 'neon', 'cosmosdb', 'bigtable', 'spanner', 'snowflake', 'bigquery',
+      'redshift', 'athena', 'clickhouse', 'timescaledb', 'couchbase', 'rethinkdb', 'fauna',
+      'duckdb', 'drizzle', 'prisma', 'sequelize', 'typeorm', 'sqlalchemy', 'hibernate',
+      'indexes', 'acid', 'sharding', 'replication', 'normalization', 'joins', 'triggers',
       
-      // Web3 & Crypto
-      'blockchain', 'crypto', 'web3', 'bitcoin', 'ethereum', 'nft', 'token', 'defi',
-      'decentralized', 'dapp', 'dao', 'smart contract', 'wallet', 'solana', 'cardano',
+      // Cryptocurrency - expanded section
+      'blockchain', 'crypto', 'cryptocurrency', 'web3', 'bitcoin', 'btc', 'ethereum', 'eth',
+      'nft', 'token', 'defi', 'decentralized', 'dapp', 'dao', 'smart contract', 'wallet',
+      'solana', 'sol', 'cardano', 'ada', 'polkadot', 'dot', 'binance', 'bnb', 'metamask',
+      'mining', 'staking', 'consensus', 'pow', 'pos', 'proof of work', 'proof of stake',
+      'l2', 'layer 2', 'rollup', 'optimism', 'arbitrum', 'zk', 'zero knowledge', 'zksync',
+      'starknet', 'polygon', 'matic', 'chainlink', 'link', 'filecoin', 'fil', 'ipfs',
+      'arweave', 'ar', 'ens', 'cex', 'dex', 'exchange', 'uniswap', 'aave', 'compound',
+      'makerdao', 'dai', 'usdc', 'usdt', 'tether', 'stablecoin', 'tron', 'trx', 'xrp',
+      'ripple', 'avalanche', 'avax', 'cosmos', 'atom', 'algorand', 'algo', 'tezos', 'xtz',
+      'monero', 'xmr', 'dogecoin', 'doge', 'shiba', 'meme coin', 'memecoin', 'yield',
+      'farming', 'liquidity', 'amm', 'ledger', 'trezor', 'cold wallet', 'hot wallet',
+      'private key', 'seed phrase', 'whitepaper', 'ico', 'ido', 'ieo', 'tokenomics',
+      'gas fee', 'gwei', 'satoshi', 'bitcoin maximalist', 'altcoin', 'shitcoin', 'hodl',
+      'to the moon', 'bull market', 'bear market', 'fud', 'fomo', 'rugpull', 'pump and dump',
+      'lightning network', 'taproot', 'erc20', 'erc721', 'erc1155', 'hard fork', 'soft fork',
+      'genesis block', 'halving', 'wrapped', 'wbtc', 'weth', 'bridge', 'cross-chain',
+      'multichain', 'interoperability', 'cefi', 'kyc', 'aml', 'soulbound', 'ordinals',
+      'brc20', 'inscription', 'crypto winter', 'nft marketplace', 'opensea', 'blur',
+      
+      // Stock Market & Finance - new section
+      'stocks', 'stock market', 'finance', 'investing', 'investment', 'wallstreetbets',
+      'wsb', 'hedge fund', 'trading', 'trader', 'nyse', 'nasdaq', 'dow jones', 's&p 500',
+      'sp500', 'russell', 'etf', 'index fund', 'mutual fund', 'options', 'futures',
+      'derivatives', 'calls', 'puts', 'technical analysis', 'fundamental analysis',
+      'candlestick', 'chart pattern', 'market cap', 'dividend', 'earnings', 'revenue', 
+      'valuation', 'pe ratio', 'price-to-earnings', 'eps', 'earnings per share',
+      'bull', 'bear', 'bullish', 'bearish', 'correction', 'crash', 'recession', 'rally',
+      'momentum', 'volatility', 'vix', 'inflation', 'deflation', 'interest rate', 'fed',
+      'federal reserve', 'treasury', 'bond', 'yield', 'yield curve', 'debt', 'margin',
+      'leverage', 'short squeeze', 'short selling', 'gamma squeeze', 'ipo', 'spac',
+      'direct listing', 'private equity', 'venture capital', 'vc', 'angel investor',
+      'portfolio', 'diversification', 'asset allocation', 'risk management', 'retirement',
+      '401k', 'ira', 'roth', 'pension', 'social security', 'broker', 'brokerage', 'fintech',
+      'robo-advisor', 'banking', 'credit', 'debt', 'mortgage', 'loan', 'insurance',
+      'underwriting', 'money market', 'forex', 'foreign exchange', 'currency', 'dollar',
+      'euro', 'yen', 'pound', 'yuan', 'emerging markets', 'commodities', 'gold', 'silver',
+      'oil', 'gas', 'natural resources', 'esg', 'sustainable investing', 'impact investing',
+      'socially responsible', 'green bonds', 'carbon credit', 'climate finance', 'tax',
+      'capital gains', 'dividend tax', 'tax loss harvesting', 'apple', 'microsoft', 'google',
+      'alphabet', 'amazon', 'tesla', 'nvidia', 'amd', 'meta', 'facebook', 'netflix',
       
       // Mobile
       'mobile', 'ios', 'android', 'flutter', 'react native', 'pwa', 'swift', 'kotlin',
-      'xamarin', 'ionic', 'capacitor', 'cordova', 'native',
+      'xamarin', 'ionic', 'capacitor', 'cordova', 'native', 'objective-c', 'swiftui',
+      'jetpack compose', 'expo', 'maui', 'nativescript', 'titanium', 'phonegap', 'appcelerator',
+      'hybrid', 'progressive web app', 'responsive', 'adaptive', 'cross-platform', 'arkit',
+      'arcore', 'arfoundation', 'augmented reality', 'virtual reality', 'mixed reality',
       
       // Security
       'security', 'privacy', 'encryption', 'hacking', 'vulnerability', 'authentication',
       'authorization', 'oauth', 'jwt', 'zero trust', 'pentest', 'bug bounty', 'infosec',
-      'cyber', 'ransomware',
+      'cyber', 'ransomware', 'malware', 'phishing', 'ddos', 'firewall', 'vpn', 'ssl', 'tls',
+      'https', 'cipher', 'hash', 'cryptography', 'identity', 'mfa', '2fa', 'passwordless',
+      'biometric', 'siem', 'compliance', 'gdpr', 'hipaa', 'sox', 'pci-dss', 'soc2', 'cve',
+      'owasp', 'csrf', 'xss', 'sqli', 'idor', 'csp', 'cors', 'waf', 'sast', 'dast', 'iast',
       
       // OS & Systems
       'linux', 'windows', 'macos', 'unix', 'ubuntu', 'debian', 'fedora', 'centos', 'redhat',
-      'embedded', 'raspberry pi', 'arduino', 'iot', 'rtos', 'kernel',
+      'embedded', 'raspberry pi', 'arduino', 'iot', 'rtos', 'kernel', 'arch', 'alpine',
+      'gentoo', 'nixos', 'wayland', 'x11', 'systemd', 'boot', 'grub', 'bios', 'uefi',
+      'hypervisor', 'vm', 'qemu', 'virtualbox', 'vmware', 'kvm', 'xen', 'proxmox', 'esxi',
+      'bare metal', 'arm', 'risc-v', 'x86', 'microcontroller', 'esp32', 'stm32', 'avr',
       
       // Gaming
       'game development', 'gamedev', 'unity', 'unreal', 'godot', 'gaming', 'directx', 'opengl',
-      'vulkan', 'vr', 'ar', 'xr', 'metaverse', 'oculus', 'quest',
+      'vulkan', 'vr', 'ar', 'xr', 'metaverse', 'oculus', 'quest', 'blender', 'maya', 'zbrush',
+      'substance', 'character', 'animation', 'procedural', 'terrain', 'physics', 'ai', 'npc',
+      'multiplayer', 'mmo', 'fps', 'tps', 'rpg', 'moba', 'battle royale', 'sandbox', 'indie',
+      'steam', 'epic', 'gog', 'itch.io', 'playstation', 'xbox', 'nintendo', 'mobile gaming',
       
       // Business & Industry
       'startup', 'funding', 'venture', 'vc', 'saas', 'software', 'entrepreneur', 'series a',
       'fintech', 'medtech', 'healthtech', 'edtech', 'agritech', 'biotech', 'govtech',
-      'legaltech', 'proptech', 'insurtech', 'regtech',
+      'legaltech', 'proptech', 'insurtech', 'regtech', 'seed', 'angel', 'bootstrap',
+      'revenue', 'acquisition', 'merger', 'ipo', 'exit', 'unicorn', 'decacorn', 'b2b',
+      'b2c', 'd2c', 'enterprise', 'smb', 'market fit', 'mvp', 'pivot', 'runway', 'burn rate',
+      'cap table', 'term sheet', 'equity', 'options', 'vesting', 'conversion', 'retention',
+      'churn', 'cac', 'ltv', 'arr', 'mrr', 'nrr', 'roi', 'kpi', 'okr', 'nps', 'csat',
       
       // Open Source
       'open source', 'oss', 'github', 'gitlab', 'contribution', 'community', 'mozilla',
-      'apache', 'mit license', 'gpl',
+      'apache', 'mit license', 'gpl', 'bsd', 'license', 'maintainer', 'contributor',
+      'fork', 'pull request', 'issue', 'bug', 'feature', 'documentation', 'code review',
+      'release', 'version', 'semantic versioning', 'git', 'svn', 'mercurial', 'changelog',
+      'roadmap', 'governance', 'coc', 'foundation', 'linux foundation', 'gnome', 'kde',
       
       // Hacker News specific
-      'showhn', 'askhn', 'tellhn', 'yc', 'ycombinator', 'startup school'
+      'showhn', 'askhn', 'tellhn', 'yc', 'ycombinator', 'startup school', 'orange site',
+      'pg', 'paul graham', 'sama', 'sam altman', 'dang', 'daniel g', 'hn', 'karma'
     ];
     
     // Expanded NLP approach
@@ -430,9 +506,77 @@ export function extractTrendingTags(stories: Story[]): { name: string; count: nu
       tagCounts.set('github', (tagCounts.get('github') || 0) + 2);
     }
     
-    if (titleLower.match(/\bgpt-[34]\b/) || titleLower.includes('openai')) {
+    if (titleLower.match(/\bgpt-[345]\b/) || titleLower.includes('openai')) {
       tagCounts.set('ai', (tagCounts.get('ai') || 0) + 2);
       tagCounts.set('openai', (tagCounts.get('openai') || 0) + 3);
+    }
+    
+    // 6. Add checks for other popular platforms
+    if (titleLower.includes('aws') || story.domain?.includes('aws.amazon.com')) {
+      tagCounts.set('aws', (tagCounts.get('aws') || 0) + 2);
+      tagCounts.set('cloud', (tagCounts.get('cloud') || 0) + 1);
+    }
+    
+    if (titleLower.includes('google') || story.domain?.includes('google.com')) {
+      tagCounts.set('google', (tagCounts.get('google') || 0) + 2);
+    }
+    
+    if (titleLower.includes('microsoft') || story.domain?.includes('microsoft.com')) {
+      tagCounts.set('microsoft', (tagCounts.get('microsoft') || 0) + 2);
+    }
+    
+    // 7. Check for programming concepts
+    const programmingConcepts = ['algorithm', 'frontend', 'backend', 'fullstack', 'database', 'api'];
+    programmingConcepts.forEach(concept => {
+      if (titleLower.includes(concept)) {
+        tagCounts.set(concept, (tagCounts.get(concept) || 0) + 2);
+      }
+    });
+    
+    // 8. Specific checks for cryptocurrency mentions
+    if (titleLower.includes('bitcoin') || titleLower.includes('btc') || story.domain?.includes('bitcoin')) {
+      tagCounts.set('bitcoin', (tagCounts.get('bitcoin') || 0) + 3);
+      tagCounts.set('crypto', (tagCounts.get('crypto') || 0) + 1);
+    }
+    
+    if (titleLower.includes('ethereum') || titleLower.includes('eth') || story.domain?.includes('ethereum')) {
+      tagCounts.set('ethereum', (tagCounts.get('ethereum') || 0) + 3);
+      tagCounts.set('crypto', (tagCounts.get('crypto') || 0) + 1);
+    }
+    
+    // 9. Specific checks for stock market mentions
+    if (titleLower.match(/\bstocks?\b/) || titleLower.match(/\btrading\b/) || titleLower.includes('market')) {
+      tagCounts.set('stocks', (tagCounts.get('stocks') || 0) + 2);
+      tagCounts.set('investing', (tagCounts.get('investing') || 0) + 1);
+    }
+    
+    if (story.domain?.includes('finance') || story.domain?.includes('investor') || 
+        story.domain?.includes('trading') || story.domain?.includes('market')) {
+      tagCounts.set('finance', (tagCounts.get('finance') || 0) + 2);
+    }
+    
+    // Check for specific stock tickers and companies
+    const stockTickers = [
+      'aapl', 'msft', 'goog', 'googl', 'amzn', 'tsla', 'meta', 'nvda', 'amd', 'nflx',
+      'dis', 'uber', 'lyft', 'coin', 'rblx', 'pltr', 'gme', 'amc', 'bb', 'nok'
+    ];
+    
+    stockTickers.forEach(ticker => {
+      if (titleLower.includes(ticker)) {
+        tagCounts.set('stocks', (tagCounts.get('stocks') || 0) + 2);
+        tagCounts.set(ticker, (tagCounts.get(ticker) || 0) + 3);
+      }
+    });
+    
+    // Check for finance-related domains
+    const financeDomainsKeywords = [
+      'invest', 'stock', 'trade', 'finance', 'money', 'nasdaq', 'nyse', 'wsj', 
+      'bloomberg', 'cnbc', 'marketwatch', 'fool', 'morningstar', 'seeking', 'alpha'
+    ];
+    
+    if (story.domain && financeDomainsKeywords.some(keyword => story.domain?.includes(keyword))) {
+      tagCounts.set('finance', (tagCounts.get('finance') || 0) + 2);
+      tagCounts.set('stocks', (tagCounts.get('stocks') || 0) + 1);
     }
   });
   
@@ -456,7 +600,45 @@ export function extractTrendingTags(stories: Story[]): { name: string; count: nu
     'deep learning': 'ml',
     'kubernetes': 'k8s',
     'blockchain': 'web3',
-    'ethereum': 'web3'
+    'ethereum': 'web3',
+    'node.js': 'node',
+    'nodejs': 'node',
+    'devops': 'devops',
+    'ci/cd': 'devops',
+    'cicd': 'devops',
+    'continuous integration': 'devops',
+    'continuous deployment': 'devops',
+    'python3': 'python',
+    'rust lang': 'rust',
+    'ux': 'design',
+    'ui': 'design',
+    'user interface': 'design',
+    'user experience': 'design',
+    'frontend': 'frontend',
+    'front-end': 'frontend',
+    'backend': 'backend',
+    'back-end': 'backend',
+    'fullstack': 'fullstack',
+    'full-stack': 'fullstack',
+    'stock': 'stocks',
+    'stock market': 'stocks',
+    'trading': 'stocks',
+    'trader': 'stocks',
+    'investing': 'investing',
+    'investment': 'investing',
+    'finance': 'finance',
+    'financial': 'finance',
+    'crypto': 'crypto',
+    'cryptocurrency': 'crypto',
+    'btc': 'bitcoin',
+    'eth': 'ethereum',
+    'sol': 'solana',
+    'ada': 'cardano',
+    'bnb': 'binance',
+    'defi': 'defi',
+    'decentralized finance': 'defi',
+    'nfts': 'nft',
+    'non-fungible token': 'nft'
   };
   
   // Create a new map for merged tags
@@ -471,5 +653,5 @@ export function extractTrendingTags(stories: Story[]): { name: string; count: nu
   return Array.from(mergedTagCounts.entries())
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 15); // Return the top 15 tags
+    .slice(0, 30); // Return the top 30 tags instead of 15
 } 

@@ -38,7 +38,7 @@ export function PromotedStory({ story }: PromotedStoryProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent"></div>
       </div>
       
-      <div className="p-5">
+      <div className="p-5 sm:p-5 p-4">
         <div className="flex gap-3">
           <div className="flex flex-col items-center pr-3 border-r">
             <Button 
@@ -51,10 +51,10 @@ export function PromotedStory({ story }: PromotedStoryProps) {
             <span className="text-sm font-medium mt-1">{story.points}</span>
           </div>
           
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-3 min-w-0">
             <div>
               <div className="flex items-start justify-between gap-2">
-                <h2 className="text-xl font-medium leading-tight">
+                <h2 className="text-xl font-medium leading-tight break-words line-clamp-3">
                   <Link to={`/item/${story.id}`} className="hover:text-hn-orange transition-colors duration-200">
                     {story.title}
                   </Link>
@@ -76,7 +76,7 @@ export function PromotedStory({ story }: PromotedStoryProps) {
               {story.domain && (
                 <a 
                   href={`/from/${encodeURIComponent(story.domain)}`}
-                  className="inline-block mt-1 text-sm text-muted-foreground hover:text-hn-orange"
+                  className="inline-block mt-1 text-sm text-muted-foreground hover:text-hn-orange truncate max-w-full"
                 >
                   {story.domain}
                 </a>
@@ -84,42 +84,47 @@ export function PromotedStory({ story }: PromotedStoryProps) {
             </div>
             
             {story.preview && (
-              <p className="text-muted-foreground">{story.preview}</p>
+              <p className="text-muted-foreground line-clamp-2 break-words">{story.preview}</p>
             )}
             
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+              <div className="min-w-0">
                 <span className="text-foreground">Posted by </span>
                 <UserTooltip username={story.user} position="top">
-                  <Link to={`/user/${story.user}`} className="hover:text-hn-orange font-medium">
+                  <Link to={`/user/${story.user}`} className="hover:text-hn-orange font-medium truncate inline-block align-bottom max-w-[120px] xs:max-w-none">
                     {story.user}
                   </Link>
                 </UserTooltip>
               </div>
               
-              <div>{story.time}</div>
+              <div className="shrink-0">{story.time}</div>
               
               <Link 
                 to={`/item/${story.id}`} 
-                className="hover:text-hn-orange flex items-center"
+                className="hover:text-hn-orange flex items-center shrink-0"
                 aria-label={`View ${story.commentsCount} comments`}
               >
                 <MessageSquare className="inline h-4 w-4 mr-1" />
-                {story.commentsCount} comments
+                {story.commentsCount} <span className="hidden xs:inline">comments</span>
               </Link>
             </div>
             
             {story.tags && story.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
-                {story.tags.map(tag => (
+                {story.tags.slice(0, 3).map(tag => (
                   <Badge 
                     key={tag} 
                     variant="secondary" 
-                    className="text-xs bg-secondary/70 hover:bg-secondary"
+                    className="text-xs bg-secondary/70 hover:bg-secondary truncate max-w-[120px]"
                   >
                     {tag}
                   </Badge>
                 ))}
+                {story.tags.length > 3 && 
+                  <Badge variant="outline" className="text-xs">
+                    +{story.tags.length - 3}
+                  </Badge>
+                }
               </div>
             )}
             
