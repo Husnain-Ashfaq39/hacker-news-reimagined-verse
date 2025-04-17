@@ -4,76 +4,146 @@ import { FilterBar } from "@/components/FilterBar";
 import { StoryCard } from "@/components/StoryCard";
 import { TrendingTags } from "@/components/TrendingTags";
 import { PromotedStory } from "@/components/PromotedStory";
-import { fetchStoryIds, fetchStories, Story } from "@/services/hnService";
+import { Story } from "@/services/hnService";
 import { UserTooltip } from "@/components/UserTooltip";
 import { Link } from "react-router-dom";
+import { useStoryIds, useStories } from "@/hooks/useHnQueries";
+import { Database, RefreshCw, WifiOff } from "lucide-react";
 
 const Index = () => {
-  const [sort, setSort] = useState("top");
+  const [sort, setSort] = useState<"top" | "new">("top");
   const [timeRange, setTimeRange] = useState("today");
-  const [stories, setStories] = useState<Story[]>([]);
-  const [promotedStory, setPromotedStory] = useState<Story | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Top contributors - in a real app, these would be dynamically fetched
-  const topContributors = [
-    "pg", "dang", "tptacek", "patio11", "jacquesm"
-  ];
-  
+  const [cacheSizeKB, setCacheSizeKB] = useState<number | null>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Track online status
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Determine which story type to fetch based on sort
-        let storyType: 'top' | 'new' = 'top';
-        
-        if (sort === 'top') storyType = 'top';
-        else if (sort === 'new') storyType = 'new';
-        
-        // Fetch appropriate story IDs
-        const ids = await fetchStoryIds(storyType);
-        
-        // Fetch the full story data for the IDs
-        const fetchedStories = await fetchStories(ids, 20);
-        
-        // Set the first story as promoted if available
-        if (fetchedStories.length > 0) {
-          setPromotedStory(fetchedStories[0]);
-          setStories(fetchedStories.slice(1));
-        } else {
-          setPromotedStory(null);
-          setStories([]);
-        }
-      } catch (err) {
-        console.error('Error fetching stories:', err);
-        setError('Failed to fetch stories. Please try again later.');
-        setStories([]);
-        setPromotedStory(null);
-      } finally {
-        setLoading(false);
-      }
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
-    
-    fetchData();
-  }, [sort, timeRange]);
-  
+  }, []);
+
+  // Use React Query hooks for data fetching with caching
+  const {
+    data: storyIds = [],
+    isLoading: isLoadingIds,
+    error: storyIdsError,
+    isStale: isStoryIdsStale,
+    isFetching: isFetchingIds,
+    dataUpdatedAt: storyIdsUpdatedAt,
+  } = useStoryIds(sort);
+
+  // Type assertion to ensure storyIds is treated as number[]
+  const {
+    data: storiesData = [],
+    isLoading: isLoadingStories,
+    error: storiesError,
+    isStale: isStoriesStale,
+    isFetching: isFetchingStories,
+    dataUpdatedAt: storiesUpdatedAt,
+    failureCount,
+  } = useStories(storyIds as number[], 20);
+
+  // Derived states
+  const loading = isLoadingIds || isLoadingStories;
+  const error =
+    (storyIdsError || storiesError) && isOnline
+      ? "Failed to fetch stories. Please try again later."
+      : null;
+  // Type assertion for storiesData to ensure it's treated as Story[]
+  const typedStoriesData = storiesData as Story[];
+  const promotedStory =
+    typedStoriesData.length > 0 ? typedStoriesData[0] : null;
+  const stories = typedStoriesData.length > 0 ? typedStoriesData.slice(1) : [];
+
+  // Check if data is coming from cache
+  const isFromCache =
+    !loading &&
+    !isFetchingIds &&
+    !isFetchingStories &&
+    (isStoryIdsStale || isStoriesStale);
+
+  // Get cache info
+  useEffect(() => {
+    try {
+      const cacheData = localStorage.getItem("HN_REACT_QUERY_CACHE");
+      if (cacheData) {
+        const sizeBytes = new Blob([cacheData]).size;
+        setCacheSizeKB(Math.round(sizeBytes / 1024));
+      } else {
+        setCacheSizeKB(0);
+      }
+    } catch (err) {
+      console.error("Error checking cache size:", err);
+      setCacheSizeKB(null);
+    }
+  }, [storyIdsUpdatedAt, storiesUpdatedAt]);
+
+  // Top contributors - in a real app, these would be dynamically fetched
+  const topContributors = ["pg", "dang", "tptacek", "patio11", "jacquesm"];
+
+  // Handler for setting sort that adapts to the FilterBar component
+  const handleSortChange = (newSort: string) => {
+    setSort(newSort as "top" | "new");
+  };
+
+  // Format the data updated time
+  const formatUpdatedTime = (timestamp: number) => {
+    if (!timestamp) return "Never";
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString();
+  };
+
   return (
     <PageLayout>
       <div className="container py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <FilterBar 
-              onFilterChange={() => {}} // Empty function since we're not using filters anymore
-              onSortChange={setSort}
-              onTimeChange={setTimeRange}
-            />
-            
-            {loading ? (
+            <div className="flex items-center justify-between">
+              <FilterBar
+                onFilterChange={() => {}} // Empty function since we're not using filters anymore
+                onSortChange={handleSortChange}
+                onTimeChange={setTimeRange}
+              />
+              {!isOnline && (
+                <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Offline Mode
+                </div>
+              )}
+              {isFromCache && (
+                <div className="flex items-center text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                  <Database className="h-3 w-3 mr-1" />
+                  Cached data {cacheSizeKB !== null && `(${cacheSizeKB} KB)`}
+                  <span className="ml-1 text-gray-500 text-[10px]">
+                    Last updated:{" "}
+                    {formatUpdatedTime(
+                      Math.max(storyIdsUpdatedAt || 0, storiesUpdatedAt || 0)
+                    )}
+                  </span>
+                </div>
+              )}
+              {(isFetchingIds || isFetchingStories) && (
+                <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                  <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                  Refreshing data...
+                </div>
+              )}
+            </div>
+
+            {loading && !storiesData.length ? (
               <div className="text-center py-12">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-hn-orange border-r-transparent" role="status">
+                <div
+                  className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-hn-orange border-r-transparent"
+                  role="status"
+                >
                   <span className="sr-only">Loading...</span>
                 </div>
                 <p className="mt-4 text-muted-foreground">Loading stories...</p>
@@ -85,13 +155,13 @@ const Index = () => {
             ) : (
               <>
                 {promotedStory && <PromotedStory story={promotedStory} />}
-                
+
                 <div className="space-y-4">
-                  {stories.map(story => (
+                  {stories.map((story) => (
                     <StoryCard key={story.id} story={story} />
                   ))}
                 </div>
-                
+
                 {stories.length > 0 && (
                   <div className="flex justify-center mt-8">
                     <button className="px-4 py-2 bg-secondary hover:bg-secondary/70 rounded-md text-sm font-medium transition-colors">
@@ -99,21 +169,36 @@ const Index = () => {
                     </button>
                   </div>
                 )}
-                
+
                 {stories.length === 0 && !loading && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No stories found with current filters.
-                  </div>
+                  <>
+                    {!isOnline && cacheSizeKB === 0 ? (
+                      <div className="text-center py-12 bg-amber-50 text-amber-700 p-4 rounded-lg">
+                        <WifiOff className="h-8 w-8 mx-auto mb-2" />
+                        <h3 className="font-medium mb-1">You're offline</h3>
+                        <p>
+                          No cached data is available. Connect to the internet
+                          to load stories.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        No stories found with current filters.
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
           </div>
-          
+
           <div className="space-y-6">
             <div className="bg-card rounded-lg border p-4">
               <h3 className="font-medium mb-3">About Hacker News</h3>
               <p className="text-sm text-muted-foreground">
-                Hacker News is a social news website focusing on computer science and entrepreneurship. It is run by Y Combinator, a startup accelerator.
+                Hacker News is a social news website focusing on computer
+                science and entrepreneurship. It is run by Y Combinator, a
+                startup accelerator.
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-center text-sm">
                 <div className="bg-muted p-3 rounded-md">
@@ -126,9 +211,9 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            
+
             <TrendingTags stories={stories} />
-            
+
             <div className="bg-card rounded-lg border p-4">
               <h3 className="font-medium mb-3">Top Contributors</h3>
               <div className="space-y-3">
@@ -140,7 +225,10 @@ const Index = () => {
                       </div>
                       <div>
                         <UserTooltip username={user}>
-                          <Link to={`/user/${user}`} className="font-medium text-sm hover:text-hn-orange">
+                          <Link
+                            to={`/user/${user}`}
+                            className="font-medium text-sm hover:text-hn-orange"
+                          >
                             {user}
                           </Link>
                         </UserTooltip>
