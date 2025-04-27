@@ -102,24 +102,6 @@ const Index = () => {
     return date.toLocaleTimeString();
   };
 
-    // Check if user is logged in and store user data if needed
-    useEffect(() => {
-      const checkAndStoreUserData = async () => {
-        try {
-          const user = await authService.getCurrentUser();
-          if (user) {
-            console.log("User logged in, storing user data");
-            // User is logged in, store data
-            await authService.storeUserData();
-          }
-        } catch (error) {
-          console.error("Error checking/storing user data:", error);
-        }
-      };
-  
-      checkAndStoreUserData();
-    }, []);
-
   return (
     <PageLayout>
       <div className="container py-8">

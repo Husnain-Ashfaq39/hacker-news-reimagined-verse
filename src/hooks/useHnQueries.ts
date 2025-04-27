@@ -20,7 +20,7 @@ const commonOptions = {
   refetchOnMount: false,
   refetchOnReconnect: false,
   // This is critical - tell React Query to return cached data when offline
-  networkMode: "always",
+  networkMode: "always" as const,
   // Don't try to refetch indefinitely in offline mode
   retry: navigator.onLine ? 1 : false,
 };
@@ -35,6 +35,7 @@ export const queryKeys = {
   ],
   storyWithComments: (id: number) => ["story", "comments", id],
   user: (username: string) => ["user", username],
+  googleAvatar: (url: string) => ["googleAvatar", url],
 };
 
 // Custom hook to fetch story IDs
@@ -97,3 +98,5 @@ export function useUser(username: string) {
     retry: navigator.onLine ? 1 : false,
   });
 }
+
+

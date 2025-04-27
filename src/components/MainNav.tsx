@@ -4,20 +4,13 @@ import {
   X,
   Search,
   Bell,
-  TrendingUp,
-  Terminal,
-  Bookmark,
-  Users,
-  BarChart,
-  Coffee,
   User,
   LogOut,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -25,7 +18,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog";
 import { Login3 } from "@/components/Login";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/store/authStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +31,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function MainNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isLoading, signOut } = useAuth();
+  const { user, isLoading, signOut, checkUserSession } = useAuthStore();
+  
+
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-sm border-b">
@@ -129,7 +124,7 @@ export function MainNav() {
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={user.prefs?.avatar || ""}
+                          src={user.profile_url}
                           alt={user.name}
                         />
                         <AvatarFallback>

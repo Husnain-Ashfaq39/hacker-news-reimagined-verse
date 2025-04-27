@@ -1,10 +1,11 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthInit } from "./components/AuthInit";
 
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
+  <>
+    <AuthInit />
     <App />
-  </AuthProvider>
+  </>
 );

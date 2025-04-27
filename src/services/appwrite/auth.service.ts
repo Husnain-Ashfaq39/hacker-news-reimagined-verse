@@ -2,6 +2,7 @@ import { account,Query } from "@/appwrite/config";
 import { OAuthProvider } from "appwrite";
 import db from "./dbServices";
 import storageServices from "./storageServices";
+import { ID } from "appwrite";
 
 class AuthService {
   // Google OAuth sign-in/sign-up
@@ -62,31 +63,47 @@ class AuthService {
       if (user.prefs?.avatar) {
         console.log("Avatar URL found:", user.prefs.avatar);
         try {
-          // Fetch user info from Google API
-          const response = await fetch(user.prefs.avatar);
-          const userData = await response.json();
-          console.log("Google user data:", userData);
+          // Create a deterministic ID based on user email to prevent duplicates
+          const userId = `user_${user.email.replace(/[^a-zA-Z0-9]/g, "_")}`;
           
-          if (userData.picture) {
-            // Fetch the actual image
-            const imageResponse = await fetch(userData.picture);
-            const blob = await imageResponse.blob();
+          // Check if we already have a profile photo for this user
+          try {
+            // Try to get the file directly using the deterministic ID
+            const existingFile = await storageServices.images.getFile(userId);
+            profileUrl = await storageServices.images.getFileDownload(existingFile.$id);
+            console.log("Using existing profile photo:", profileUrl);
+          } catch (fileError) {
+            // File doesn't exist, upload a new one
+            console.log("No existing profile photo found, uploading new one");
             
-            // Create a File object from the blob
-            const avatarFile = new File([blob], `${user.name}-profile.${blob.type.split('/')[1] || 'png'}`, {
-              type: blob.type,
-            });
-            console.log("Created avatar File object:", avatarFile);
+            // Fetch user info from Google API
+            const response = await fetch(user.prefs.avatar);
+            const userData = await response.json();
+            console.log("Google user data:", userData);
             
-            // Upload to storage
-            console.log("Attempting to upload to storage...");
-            const uploadedFile = await storageServices.images.createFile(avatarFile);
-            console.log("Storage upload response:", uploadedFile);
-            
-            // Get file URL
-            console.log("Getting file download URL...");
-            profileUrl = await storageServices.images.getFileDownload(uploadedFile.$id);
-          
+            if (userData.picture) {
+              // Fetch the actual image
+              const imageResponse = await fetch(userData.picture);
+              const blob = await imageResponse.blob();
+              
+              // Create a File object from the blob
+              const avatarFile = new File([blob], `${user.name}-profile.${blob.type.split('/')[1] || 'png'}`, {
+                type: blob.type,
+              });
+              console.log("Created avatar File object:", avatarFile);
+              
+              // Upload to storage with user's email as metadata
+              console.log("Attempting to upload to storage...");
+              const uploadedFile = await storageServices.images.createFile(
+                avatarFile,
+                userId
+              );
+              console.log("Storage upload response:", uploadedFile);
+              
+              // Get file URL
+              console.log("Getting file download URL...");
+              profileUrl = await storageServices.images.getFileDownload(uploadedFile.$id);
+            }
           }
         } catch (imageError) {
           console.error("Error uploading profile image:", imageError);
