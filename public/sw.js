@@ -3,8 +3,8 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
   '/src/main.tsx',
   'https://cdn.gpteng.co/gptengineer.js'
 ];
