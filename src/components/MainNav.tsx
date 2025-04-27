@@ -6,6 +6,8 @@ import {
   Bell,
   User,
   LogOut,
+  Activity,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,6 +95,12 @@ export function MainNav() {
             >
               Jobs
             </Link>
+            <Link
+              to="/dashboard"
+              className="font-medium text-muted-foreground transition-colors hover:text-hn-orange"
+            >
+              Dashboard
+            </Link>
           </nav>
         </div>
 
@@ -109,6 +117,12 @@ export function MainNav() {
           <Button variant="ghost" size="icon" className="hidden md:flex">
             <Bell className="h-5 w-5" />
           </Button>
+
+          <Link to="/dashboard">
+            <Button variant="ghost" size="icon" className="hidden md:flex" aria-label="Dashboard">
+              <LayoutDashboard className="h-5 w-5" />
+            </Button>
+          </Link>
 
           <ThemeToggle />
 
@@ -136,6 +150,12 @@ export function MainNav() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard">
+                        <Activity className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>

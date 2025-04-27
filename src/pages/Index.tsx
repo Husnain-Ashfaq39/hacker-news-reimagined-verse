@@ -8,8 +8,10 @@ import { Story } from "@/services/hnService";
 import { UserTooltip } from "@/components/UserTooltip";
 import { Link } from "react-router-dom";
 import { useStoryIds, useStories } from "@/hooks/useHnQueries";
-import { Database, RefreshCw, WifiOff } from "lucide-react";
+import { Database, RefreshCw, WifiOff, LayoutDashboard } from "lucide-react";
 import { authService } from "@/services/appwrite/auth.service";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/authStore";
 
 const Index = () => {
   const [sort, setSort] = useState<"top" | "new">("top");
@@ -194,6 +196,22 @@ const Index = () => {
           </div>
 
           <div className="space-y-6">
+            {/* Add Dashboard button if user is logged in */}
+            {useAuthStore.getState().user && (
+              <div className="bg-card rounded-lg border p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">Analytics Dashboard</h3>
+                  <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Track your reading habits, screen time, and engagement with content.
+                </p>
+                <Button asChild className="w-full bg-hn-orange hover:bg-hn-orange/90">
+                  <Link to="/dashboard">View Dashboard</Link>
+                </Button>
+              </div>
+            )}
+            
             <div className="bg-card rounded-lg border p-4">
               <h3 className="font-medium mb-3">About Hacker News</h3>
               <p className="text-sm text-muted-foreground">

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Comments from "./pages/Comments";
 import NotFound from "./pages/NotFound";
+import { UserDashboard } from "./pages/UserDashboard";
 import { useState, useEffect } from "react";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -81,6 +82,7 @@ const App = () => {
             <Route path="/ask" element={<Index />} />
             <Route path="/show" element={<Index />} />
             <Route path="/jobs" element={<Index />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/item/:id" element={<Comments />} />
             <Route path="/user/:username" element={<Index />} />
             <Route path="/from/:domain" element={<Index />} />
