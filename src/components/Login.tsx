@@ -1,6 +1,7 @@
 import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
-import { authService } from "@/services/auth.service";
+import { authService } from "@/services/appwrite/auth.service";
+import { useEffect } from "react";
 
 interface Login3Props {
   heading?: string;
@@ -25,12 +26,18 @@ const Login3 = ({
 }: Login3Props) => {
   const handleGoogleSignIn = async () => {
     try {
+      // We only need to initiate Google OAuth flow here
+      // The storeUserData will be called in the useEffect after successful login
       await authService.signInWithGoogle();
-      // The page will redirect to the OAuth provider, so no need for further handling here
+      
+      // Note: Google OAuth will redirect, so we don't need to call storeUserData here
+      // It will be handled by useEffect after redirect
     } catch (error) {
       console.error("Google sign-in failed:", error);
     }
   };
+
+
 
   return (
     <section className="py-4">

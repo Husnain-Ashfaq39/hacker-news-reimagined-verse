@@ -9,6 +9,7 @@ import { UserTooltip } from "@/components/UserTooltip";
 import { Link } from "react-router-dom";
 import { useStoryIds, useStories } from "@/hooks/useHnQueries";
 import { Database, RefreshCw, WifiOff } from "lucide-react";
+import { authService } from "@/services/appwrite/auth.service";
 
 const Index = () => {
   const [sort, setSort] = useState<"top" | "new">("top");
@@ -100,6 +101,24 @@ const Index = () => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString();
   };
+
+    // Check if user is logged in and store user data if needed
+    useEffect(() => {
+      const checkAndStoreUserData = async () => {
+        try {
+          const user = await authService.getCurrentUser();
+          if (user) {
+            console.log("User logged in, storing user data");
+            // User is logged in, store data
+            await authService.storeUserData();
+          }
+        } catch (error) {
+          console.error("Error checking/storing user data:", error);
+        }
+      };
+  
+      checkAndStoreUserData();
+    }, []);
 
   return (
     <PageLayout>
