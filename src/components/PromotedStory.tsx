@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { ExternalLink, MessageSquare, ArrowUp } from "lucide-react";
+import { ExternalLink, MessageSquare, ArrowUp, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserTooltip } from "@/components/UserTooltip";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 interface PromotedStoryProps {
   story: {
@@ -18,11 +20,60 @@ interface PromotedStoryProps {
     image?: string;
     tags?: string[];
   };
+  isSaved?: boolean;
+  onSaveToggle?: () => void;
 }
 
-export function PromotedStory({ story }: PromotedStoryProps) {
+export function PromotedStory({ story, isSaved = false, onSaveToggle }: PromotedStoryProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showSavedOverlay, setShowSavedOverlay] = useState(false);
+  
+  // Handle save animation
+  const handleSave = () => {
+    if (!onSaveToggle) return;
+    
+    // Only animate when saving (not when unsaving)
+    if (!isSaved) {
+      setIsAnimating(true);
+      setShowSavedOverlay(true);
+      
+      // Hide the overlay after animation
+      setTimeout(() => {
+        setShowSavedOverlay(false);
+      }, 1500);
+    }
+    
+    onSaveToggle();
+  };
+  
+  // Reset animation state when finished
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
+  
   return (
-    <div className="bg-card rounded-lg border overflow-hidden mb-6">
+    <div className="bg-card rounded-lg border overflow-hidden mb-6 relative">
+      {/* Save animation overlay */}
+      {showSavedOverlay && (
+        <div className="absolute inset-0 flex items-center justify-center bg-hn-orange/5 backdrop-blur-sm z-10 animate-fadeIn">
+          <div className="flex flex-col items-center justify-center">
+            <div className="relative">
+              <Bookmark className="h-16 w-16 text-hn-orange fill-current animate-pulse" />
+              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">Saved</span>
+              </div>
+            </div>
+            <div className="mt-3 text-base text-hn-orange font-medium">Story saved for later</div>
+          </div>
+        </div>
+      )}
+      
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-hn-orange/20 to-hn-orange/5">
         {story.image ? (
           <img 
@@ -60,17 +111,52 @@ export function PromotedStory({ story }: PromotedStoryProps) {
                   </Link>
                 </h2>
                 
-                {story.url && (
-                  <a 
-                    href={story.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Open external link"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+                <div className="flex items-center gap-1">
+                  {onSaveToggle && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-8 w-8 text-muted-foreground hover:text-hn-orange hover:bg-hn-orange/10",
+                        isAnimating && "animate-saveButtonPulse",
+                        isSaved && "text-hn-orange"
+                      )}
+                      onClick={handleSave}
+                      aria-label={isSaved ? "Remove from saved" : "Save for later"}
+                      title={isSaved ? "Remove from saved" : "Save for later"}
+                    >
+                      <Bookmark className={cn(
+                        "h-4 w-4 transition-all", 
+                        isAnimating && "scale-125",
+                        isSaved && "fill-current"
+                      )} />
+                      
+                      {/* Particle effect */}
+                      {isAnimating && (
+                        <div className="absolute -inset-1 overflow-hidden">
+                          <div className="particle-1"></div>
+                          <div className="particle-2"></div>
+                          <div className="particle-3"></div>
+                          <div className="particle-4"></div>
+                          <div className="particle-5"></div>
+                          <div className="particle-6"></div>
+                        </div>
+                      )}
+                    </Button>
+                  )}
+                
+                  {story.url && (
+                    <a 
+                      href={story.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-muted-foreground hover:text-foreground"
+                      aria-label="Open external link"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
               </div>
               
               {story.domain && (
@@ -128,13 +214,20 @@ export function PromotedStory({ story }: PromotedStoryProps) {
               </div>
             )}
             
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-3">
               <Link 
                 to={`/item/${story.id}`}
                 className="inline-block px-4 py-2 bg-hn-orange text-white rounded-md font-medium hover:bg-hn-orange/90 transition-colors"
               >
                 Read Discussion
               </Link>
+              
+              {isSaved && (
+                <div className="text-xs text-hn-orange flex items-center gap-1">
+                  <Bookmark className="h-3 w-3 fill-current" />
+                  <span>Saved for later</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Comments from "./pages/Comments";
 import NotFound from "./pages/NotFound";
 import { UserDashboard } from "./pages/UserDashboard";
+import { SharedSummary } from "./pages/SharedSummary";
+import SearchResults from "./pages/SearchResults";
 import { useState, useEffect } from "react";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -87,6 +89,8 @@ const App = () => {
             <Route path="/user/:username" element={<Index />} />
             <Route path="/from/:domain" element={<Index />} />
             <Route path="/tag/:tag" element={<Index />} />
+            <Route path="/summary/:id" element={<SharedSummary />} />
+            <Route path="/search" element={<SearchResults />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

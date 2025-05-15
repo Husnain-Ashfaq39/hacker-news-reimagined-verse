@@ -94,6 +94,48 @@
   }
 }
 
+/* Save button animation particles */
+.particle-1,
+.particle-2,
+.particle-3,
+.particle-4,
+.particle-5,
+.particle-6 {
+  @apply absolute rounded-full;
+  width: 4px;
+  height: 4px;
+  background-color: #ff6600;
+  opacity: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+
+.particle-1 {
+  animation: particle-1 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.particle-2 {
+  animation: particle-2 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.particle-3 {
+  animation: particle-3 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.particle-4 {
+  animation: particle-4 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.particle-5 {
+  animation: particle-5 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.particle-6 {
+  animation: particle-6 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
 /* Fix for HackerNews comment content */
 .comment-text {
   word-wrap: break-word;

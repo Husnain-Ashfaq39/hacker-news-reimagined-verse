@@ -8,16 +8,45 @@ import { Story } from "@/services/hnService";
 import { UserTooltip } from "@/components/UserTooltip";
 import { Link } from "react-router-dom";
 import { useStoryIds, useStories } from "@/hooks/useHnQueries";
-import { Database, RefreshCw, WifiOff, LayoutDashboard } from "lucide-react";
+import { Database, RefreshCw, WifiOff, LayoutDashboard, X, Bookmark } from "lucide-react";
 import { authService } from "@/services/appwrite/auth.service";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { NewsSummary } from "@/components/NewsSummary";
+
+// Key for localStorage
+const SAVED_STORIES_KEY = "hn_saved_stories";
 
 const Index = () => {
   const [sort, setSort] = useState<"top" | "new">("top");
   const [timeRange, setTimeRange] = useState("today");
   const [cacheSizeKB, setCacheSizeKB] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [savedStories, setSavedStories] = useState<Story[]>([]);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+
+  // Load saved stories from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedStoriesJson = localStorage.getItem(SAVED_STORIES_KEY);
+      if (savedStoriesJson) {
+        const parsedStories = JSON.parse(savedStoriesJson);
+        setSavedStories(parsedStories);
+      }
+    } catch (err) {
+      console.error("Error loading saved stories from localStorage:", err);
+    }
+  }, []);
+
+  // Save to localStorage whenever savedStories changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(SAVED_STORIES_KEY, JSON.stringify(savedStories));
+    } catch (err) {
+      console.error("Error saving stories to localStorage:", err);
+    }
+  }, [savedStories]);
 
   // Track online status
   useEffect(() => {
@@ -60,11 +89,33 @@ const Index = () => {
     (storyIdsError || storiesError) && isOnline
       ? "Failed to fetch stories. Please try again later."
       : null;
+  
   // Type assertion for storiesData to ensure it's treated as Story[]
   const typedStoriesData = storiesData as Story[];
+  
+  // Filter stories based on selected tags if any
+  const filteredStories = selectedTags.length > 0
+    ? typedStoriesData.filter(story => {
+        // If a story doesn't have tags, check the title for the selected tags
+        if (!story.tags || story.tags.length === 0) {
+          const titleLower = story.title.toLowerCase();
+          return selectedTags.some(tag => titleLower.includes(tag.toLowerCase()));
+        }
+        // Otherwise check if any selected tag exists in the story's tags
+        return selectedTags.some(tag => 
+          story.tags?.some(storyTag => storyTag.toLowerCase() === tag.toLowerCase())
+        );
+      })
+    : typedStoriesData;
+  
+  // Filter to only show saved stories if showSavedOnly is true
+  const displayStories = showSavedOnly 
+    ? savedStories 
+    : filteredStories;
+    
   const promotedStory =
-    typedStoriesData.length > 0 ? typedStoriesData[0] : null;
-  const stories = typedStoriesData.length > 0 ? typedStoriesData.slice(1) : [];
+    displayStories.length > 0 ? displayStories[0] : null;
+  const stories = displayStories.length > 0 ? displayStories.slice(1) : [];
 
   // Check if data is coming from cache
   const isFromCache =
@@ -89,6 +140,43 @@ const Index = () => {
     }
   }, [storyIdsUpdatedAt, storiesUpdatedAt]);
 
+  // Handler for tag selection
+  const handleTagClick = (tag: string) => {
+    // If tag is already selected, remove it
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      // Add the tag to selected tags
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  // Clear all selected tags
+  const clearSelectedTags = () => {
+    setSelectedTags([]);
+  };
+
+  // Toggle to show saved stories only or all stories
+  const toggleSavedStories = () => {
+    setShowSavedOnly(!showSavedOnly);
+  };
+
+  // Check if a story is saved
+  const isStorySaved = (storyId: number) => {
+    return savedStories.some(story => story.id === storyId);
+  };
+
+  // Save or unsave a story
+  const toggleSaveStory = (story: Story) => {
+    if (isStorySaved(story.id)) {
+      // Remove story from saved stories
+      setSavedStories(savedStories.filter(s => s.id !== story.id));
+    } else {
+      // Add story to saved stories
+      setSavedStories([...savedStories, story]);
+    }
+  };
+
   // Top contributors - in a real app, these would be dynamically fetched
   const topContributors = ["pg", "dang", "tptacek", "patio11", "jacquesm"];
 
@@ -107,41 +195,118 @@ const Index = () => {
   return (
     <PageLayout>
       <div className="container py-8">
+        {/* Mobile view for Generate Summary and Trending Tags */}
+        <div className="lg:hidden space-y-4 mb-6">
+          <NewsSummary stories={storiesData as Story[]} />
+          <TrendingTags 
+            stories={typedStoriesData} 
+            onTagClick={handleTagClick}
+            selectedTags={selectedTags}
+          />
+        </div>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <FilterBar
-                onFilterChange={() => {}} // Empty function since we're not using filters anymore
-                onSortChange={handleSortChange}
-                onTimeChange={setTimeRange}
-              />
-              {!isOnline && (
-                <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
-                  <WifiOff className="h-3 w-3 mr-1" />
-                  Offline Mode
-                </div>
-              )}
-              {isFromCache && (
-                <div className="flex items-center text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                  <Database className="h-3 w-3 mr-1" />
-                  Cached data {cacheSizeKB !== null && `(${cacheSizeKB} KB)`}
-                  <span className="ml-1 text-gray-500 text-[10px]">
-                    Last updated:{" "}
-                    {formatUpdatedTime(
-                      Math.max(storyIdsUpdatedAt || 0, storiesUpdatedAt || 0)
-                    )}
-                  </span>
-                </div>
-              )}
-              {(isFetchingIds || isFetchingStories) && (
-                <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
-                  <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                  Refreshing data...
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold">
+                  {showSavedOnly ? 'Saved Stories' : 'All Stories'}
+                </h2>
+                <Button 
+                  variant={showSavedOnly ? "default" : "outline"} 
+                  size="sm"
+                  className={`text-xs flex items-center gap-1 ml-2 ${showSavedOnly ? 'bg-hn-orange text-white hover:bg-hn-orange-dark' : ''}`}
+                  onClick={toggleSavedStories}
+                >
+                  <Bookmark className="h-3 w-3" />
+                  {savedStories.length > 0 && (
+                    <span className="ml-1 text-[10px] bg-primary-foreground/20 px-1 rounded-full">
+                      {savedStories.length}
+                    </span>
+                  )}
+                  {showSavedOnly ? 'Saved' : 'Show Saved'}
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FilterBar
+                  onFilterChange={() => {}} // Empty function since we're not using filters anymore
+                  onSortChange={handleSortChange}
+                  onTimeChange={setTimeRange}
+                  showTitle={false}
+                />
+                
+                {!isOnline && (
+                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
+                    <WifiOff className="h-3 w-3 mr-1" />
+                    Offline Mode
+                  </div>
+                )}
+                {isFromCache && (
+                  <div className="flex items-center text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                    <Database className="h-3 w-3 mr-1" />
+                    Cached data {cacheSizeKB !== null && `(${cacheSizeKB} KB)`}
+                    <span className="ml-1 text-gray-500 text-[10px]">
+                      Last updated:{" "}
+                      {formatUpdatedTime(
+                        Math.max(storyIdsUpdatedAt || 0, storiesUpdatedAt || 0)
+                      )}
+                    </span>
+                  </div>
+                )}
+                {(isFetchingIds || isFetchingStories) && (
+                  <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                    Refreshing data...
+                  </div>
+                )}
+              </div>
             </div>
 
-            {loading && !storiesData.length ? (
+            {/* Show active filters if any tags are selected */}
+            {selectedTags.length > 0 && !showSavedOnly && (
+              <div className="flex flex-wrap items-center gap-2 bg-muted p-2 rounded-md">
+                <span className="text-sm font-medium">Filtered by:</span>
+                {selectedTags.map(tag => (
+                  <div 
+                    key={tag} 
+                    className="flex items-center gap-1 bg-hn-orange/10 text-hn-orange text-xs px-2 py-1 rounded-full"
+                  >
+                    {tag}
+                    <button 
+                      onClick={() => handleTagClick(tag)} 
+                      className="hover:text-hn-orange-dark"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <button 
+                  onClick={clearSelectedTags}
+                  className="text-xs text-muted-foreground hover:text-hn-orange ml-2"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {/* Show Saved mode indicator */}
+            {showSavedOnly && (
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-hn-orange/10 p-2 rounded-md">
+                <div className="flex items-center gap-2">
+                  <Bookmark className="h-4 w-4 text-hn-orange" />
+                  <span className="text-sm font-medium text-hn-orange">Showing saved stories ({savedStories.length})</span>
+                </div>
+                <button 
+                  onClick={toggleSavedStories}
+                  className="text-xs text-muted-foreground hover:text-hn-orange"
+                >
+                  Show all stories
+                </button>
+              </div>
+            )}
+
+            {loading && !storiesData.length && !showSavedOnly ? (
               <div className="text-center py-12">
                 <div
                   className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-hn-orange border-r-transparent"
@@ -151,31 +316,43 @@ const Index = () => {
                 </div>
                 <p className="mt-4 text-muted-foreground">Loading stories...</p>
               </div>
-            ) : error ? (
+            ) : error && !showSavedOnly ? (
               <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
                 {error}
               </div>
             ) : (
               <>
-                {promotedStory && <PromotedStory story={promotedStory} />}
+                {promotedStory && <PromotedStory 
+                  story={promotedStory} 
+                  isSaved={isStorySaved(promotedStory.id)}
+                  onSaveToggle={() => toggleSaveStory(promotedStory)}
+                />}
 
                 <div className="space-y-4">
                   {stories.map((story) => (
-                    <StoryCard key={story.id} story={story} />
+                    <StoryCard 
+                      key={story.id} 
+                      story={story} 
+                      isSaved={isStorySaved(story.id)}
+                      onSaveToggle={() => toggleSaveStory(story)}
+                    />
                   ))}
                 </div>
 
-                {stories.length > 0 && (
+                {stories.length > 0 && !showSavedOnly && (
                   <div className="flex justify-center mt-8">
-                    <button className="px-4 py-2 bg-secondary hover:bg-secondary/70 rounded-md text-sm font-medium transition-colors">
+                    <button className="px-4 py-2 bg-hn-orange text-white hover:bg-hn-orange/90 rounded-md text-sm font-medium transition-colors flex items-center gap-2">
                       Load More
+                      {(isFetchingIds || isFetchingStories) && (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      )}
                     </button>
                   </div>
                 )}
 
                 {stories.length === 0 && !loading && (
                   <>
-                    {!isOnline && cacheSizeKB === 0 ? (
+                    {!isOnline && cacheSizeKB === 0 && !showSavedOnly ? (
                       <div className="text-center py-12 bg-amber-50 text-amber-700 p-4 rounded-lg">
                         <WifiOff className="h-8 w-8 mx-auto mb-2" />
                         <h3 className="font-medium mb-1">You're offline</h3>
@@ -184,9 +361,18 @@ const Index = () => {
                           to load stories.
                         </p>
                       </div>
+                    ) : showSavedOnly ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        You haven't saved any stories yet. 
+                        <p className="mt-2 text-sm">
+                          Click the bookmark icon on stories you want to read later.
+                        </p>
+                      </div>
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
-                        No stories found with current filters.
+                        {selectedTags.length > 0 
+                          ? "No stories found matching the selected topics. Try removing some filters."
+                          : "No stories found with current filters."}
                       </div>
                     )}
                   </>
@@ -195,43 +381,14 @@ const Index = () => {
             )}
           </div>
 
-          <div className="space-y-6">
-            {/* Add Dashboard button if user is logged in */}
-            {useAuthStore.getState().user && (
-              <div className="bg-card rounded-lg border p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium">Analytics Dashboard</h3>
-                  <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Track your reading habits, screen time, and engagement with content.
-                </p>
-                <Button asChild className="w-full bg-hn-orange hover:bg-hn-orange/90">
-                  <Link to="/dashboard">View Dashboard</Link>
-                </Button>
-              </div>
-            )}
+          <div className="hidden lg:block space-y-6">
+            <NewsSummary stories={storiesData as Story[]} />
             
-            <div className="bg-card rounded-lg border p-4">
-              <h3 className="font-medium mb-3">About Hacker News</h3>
-              <p className="text-sm text-muted-foreground">
-                Hacker News is a social news website focusing on computer
-                science and entrepreneurship. It is run by Y Combinator, a
-                startup accelerator.
-              </p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-center text-sm">
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="font-semibold">42K+</div>
-                  <div className="text-xs text-muted-foreground">Stories</div>
-                </div>
-                <div className="bg-muted p-3 rounded-md">
-                  <div className="font-semibold">125K+</div>
-                  <div className="text-xs text-muted-foreground">Users</div>
-                </div>
-              </div>
-            </div>
-
-            <TrendingTags stories={stories} />
+            <TrendingTags 
+              stories={typedStoriesData} 
+              onTagClick={handleTagClick}
+              selectedTags={selectedTags}
+            />
 
             <div className="bg-card rounded-lg border p-4">
               <h3 className="font-medium mb-3">Top Contributors</h3>

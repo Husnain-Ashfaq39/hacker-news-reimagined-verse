@@ -7,9 +7,15 @@ import { useState, useEffect } from "react";
 
 interface TrendingTagsProps {
   stories?: Story[];
+  onTagClick?: (tag: string) => void;
+  selectedTags?: string[];
 }
 
-export function TrendingTags({ stories = [] }: TrendingTagsProps) {
+export function TrendingTags({ 
+  stories = [], 
+  onTagClick, 
+  selectedTags = [] 
+}: TrendingTagsProps) {
   const [trendingTags, setTrendingTags] = useState<{ name: string; count: number }[]>([]);
   const [visibleTagCount, setVisibleTagCount] = useState(12);
   const [showMore, setShowMore] = useState(false);
@@ -66,6 +72,12 @@ export function TrendingTags({ stories = [] }: TrendingTagsProps) {
     }
     setShowMore(!showMore);
   };
+
+  const handleTagSelect = (tag: string) => {
+    if (onTagClick) {
+      onTagClick(tag);
+    }
+  };
   
   return (
     <div className="bg-card rounded-lg border p-4">
@@ -85,16 +97,22 @@ export function TrendingTags({ stories = [] }: TrendingTagsProps) {
       </div>
       
       <div className="flex flex-wrap gap-2">
-        {trendingTags.slice(0, visibleTagCount).map(tag => (
-          <Link key={tag.name} to={`/tag/${tag.name}`}>
-            <Badge 
-              variant="secondary" 
-              className="bg-secondary/70 hover:bg-secondary cursor-pointer text-xs transition-colors"
+        {trendingTags.slice(0, visibleTagCount).map(tag => {
+          const isSelected = selectedTags.includes(tag.name);
+          return (
+            <button 
+              key={tag.name}
+              onClick={() => handleTagSelect(tag.name)}
+              className={`flex items-center ${
+                isSelected 
+                  ? "bg-hn-orange text-white hover:bg-hn-orange-dark" 
+                  : "bg-secondary/70 hover:bg-secondary"
+              } cursor-pointer text-xs px-2 py-1 rounded-full transition-colors`}
             >
-              {tag.name} <span className="ml-1 text-muted-foreground">{tag.count}</span>
-            </Badge>
-          </Link>
-        ))}
+              {tag.name} <span className={`ml-1 ${isSelected ? "text-white/80" : "text-muted-foreground"}`}>{tag.count}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

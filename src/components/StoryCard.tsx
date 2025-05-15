@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { ExternalLink, MessageSquare, ArrowUp, Clock, User } from "lucide-react";
+import { ExternalLink, MessageSquare, ArrowUp, Clock, User, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserTooltip } from "@/components/UserTooltip";
+import { useState, useEffect } from "react";
 
 interface StoryCardProps {
   story: {
@@ -19,16 +20,69 @@ interface StoryCardProps {
     preview?: string;
   };
   variant?: "default" | "compact";
+  isSaved?: boolean;
+  onSaveToggle?: () => void;
 }
 
-export function StoryCard({ story, variant = "default" }: StoryCardProps) {
+export function StoryCard({ 
+  story, 
+  variant = "default", 
+  isSaved = false,
+  onSaveToggle
+}: StoryCardProps) {
   const isCompact = variant === "compact";
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showSavedOverlay, setShowSavedOverlay] = useState(false);
+  
+  // Handle save animation
+  const handleSave = () => {
+    if (!onSaveToggle) return;
+    
+    // Only animate when saving (not when unsaving)
+    if (!isSaved) {
+      setIsAnimating(true);
+      setShowSavedOverlay(true);
+      
+      // Hide the overlay after animation
+      setTimeout(() => {
+        setShowSavedOverlay(false);
+      }, 1500);
+    }
+    
+    onSaveToggle();
+  };
+  
+  // Reset animation state when finished
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
   
   return (
     <div className={cn(
-      "story-card group relative bg-card rounded-lg border p-4 transition-all duration-200 hover:shadow-md",
+      "story-card group relative bg-card rounded-lg border p-4 transition-all duration-200 hover:shadow-md overflow-hidden",
       isCompact ? "p-3" : ""
     )}>
+      {/* Save animation overlay */}
+      {showSavedOverlay && (
+        <div className="absolute inset-0 flex items-center justify-center bg-hn-orange/5 backdrop-blur-sm z-10 animate-fadeIn">
+          <div className="flex flex-col items-center justify-center">
+            <div className="relative">
+              <Bookmark className="h-12 w-12 text-hn-orange fill-current animate-pulse" />
+              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">Saved</span>
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-hn-orange font-medium">Story saved for later</div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex gap-3">
         <div className={cn(
           "flex flex-col items-center",
@@ -61,17 +115,52 @@ export function StoryCard({ story, variant = "default" }: StoryCardProps) {
                 </Link>
               </h3>
               
-              {story.url && (
-                <a 
-                  href={story.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="shrink-0 text-muted-foreground hover:text-foreground"
-                  aria-label="Open external link"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
+              <div className="flex items-center gap-1">
+                {onSaveToggle && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8 text-muted-foreground hover:text-hn-orange hover:bg-hn-orange/10",
+                      isAnimating && "animate-saveButtonPulse",
+                      isSaved && "text-hn-orange"
+                    )}
+                    onClick={handleSave}
+                    aria-label={isSaved ? "Remove from saved" : "Save for later"}
+                    title={isSaved ? "Remove from saved" : "Save for later"}
+                  >
+                    <Bookmark className={cn(
+                      "h-4 w-4 transition-all", 
+                      isAnimating && "scale-125",
+                      isSaved && "fill-current"
+                    )} />
+                    
+                    {/* Particle effect */}
+                    {isAnimating && (
+                      <div className="absolute -inset-1 overflow-hidden">
+                        <div className="particle-1"></div>
+                        <div className="particle-2"></div>
+                        <div className="particle-3"></div>
+                        <div className="particle-4"></div>
+                        <div className="particle-5"></div>
+                        <div className="particle-6"></div>
+                      </div>
+                    )}
+                  </Button>
+                )}
+                
+                {story.url && (
+                  <a 
+                    href={story.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label="Open external link"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
             </div>
             
             {story.domain && (

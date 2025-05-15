@@ -12,7 +12,7 @@ export function Footer() {
               <div className="bg-hn-orange text-white font-bold h-6 w-6 rounded flex items-center justify-center text-sm">
                 HN
               </div>
-              <span className="font-semibold">Hacker News Redesigned</span>
+              <span className="font-semibold">Hacker News</span>
             </div>
             <p className="text-sm text-muted-foreground">
               A modern UI redesign of Hacker News, focused on readability and usability while maintaining the simplicity of the original.
@@ -70,7 +70,7 @@ export function Footer() {
         
         <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
           <p>This is a redesign concept. Original Hacker News content is owned and operated by Y Combinator.</p>
-          <p className="mt-1">© {new Date().getFullYear()} Hacker News Redesigned</p>
+          <p className="mt-1">© {new Date().getFullYear()} Hacker News</p>
         </div>
       </div>
     </footer>
