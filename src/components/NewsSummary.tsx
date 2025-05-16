@@ -152,7 +152,7 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-hn-orange/10 to-blue-500/10 hover:from-hn-orange/20 hover:to-blue-500/20"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 relative overflow-hidden group"
           onClick={() => {
             if (!user) {
               // Show login requirement
@@ -166,8 +166,12 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
             }
           }}
         >
-          <Sparkles className="h-4 w-4 text-hn-orange" />
-          <span>Generate Summary Using Our AI</span>
+          <div className="absolute inset-0 bg-gradient-to-r from-hn-orange/10 via-blue-500/20 to-hn-orange/10 bg-[length:200%_100%] animate-shimmer" />
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-hn-orange/20 to-blue-500/20 transition-opacity duration-300" />
+          <div className="relative flex items-center justify-center gap-2">
+            <Sparkles className="h-4 w-4 text-hn-orange group-hover:text-hn-orange-dark transition-colors duration-300" />
+            <span className="group-hover:text-slate-900 transition-colors duration-300">Generate Summary Using Our AI</span>
+          </div>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[80vh] overflow-y-auto">

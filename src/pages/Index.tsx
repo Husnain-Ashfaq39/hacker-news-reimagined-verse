@@ -28,6 +28,9 @@ const Index = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [savedStories, setSavedStories] = useState<Story[]>([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const storiesPerPage = 20;
+  const storyOffset = (currentPage - 1) * storiesPerPage;
 
   // Load saved stories from localStorage on component mount
   useEffect(() => {
@@ -84,7 +87,10 @@ const Index = () => {
     isFetching: isFetchingStories,
     dataUpdatedAt: storiesUpdatedAt,
     failureCount,
-  } = useStories(storyIds as number[], 20);
+  } = useStories(
+    storyIds.slice(storyOffset, storyOffset + storiesPerPage) as number[], 
+    storiesPerPage
+  );
 
   // Derived states
   const loading = isLoadingIds || isLoadingStories;
@@ -197,6 +203,67 @@ const Index = () => {
 
   // Create skelton array for loading state
   const skeletonArray = Array(10).fill(0);
+
+  // Calculate total pages
+  const totalStories = storyIds.length;
+  const totalPages = Math.ceil(totalStories / storiesPerPage);
+
+  // Handler to go to next page
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo(0, 0); // Scroll to top when changing pages
+    }
+  };
+
+  // Handler to go to previous page
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo(0, 0); // Scroll to top when changing pages
+    }
+  };
+
+  // Handler to go to a specific page
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+      window.scrollTo(0, 0); // Scroll to top when changing pages
+    }
+  };
+
+  // Modify the getPageNumbers function to be more mobile-friendly
+  const getPageNumbers = () => {
+    const pages = [];
+    
+    // Always include page 1
+    pages.push(1);
+    
+    // Add ellipsis if needed before middle pages
+    if (currentPage > 3) {
+      pages.push('ellipsis-start');
+    }
+    
+    // Add current page and surrounding pages if they're not already included
+    // For mobile optimization, we'll still calculate all these but may hide some in the UI
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(currentPage + 1, totalPages - 1); i++) {
+      if (!pages.includes(i)) {
+        pages.push(i);
+      }
+    }
+    
+    // Add ellipsis if needed after middle pages
+    if (currentPage < totalPages - 2) {
+      pages.push('ellipsis-end');
+    }
+    
+    // Always include last page if it exists and isn't already included
+    if (totalPages > 1 && !pages.includes(totalPages)) {
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
 
   return (
     <PageLayout>
@@ -385,12 +452,73 @@ const Index = () => {
 
                 {stories.length > 0 && !showSavedOnly && (
                   <div className="flex justify-center mt-8">
-                    <button className="px-4 py-2 bg-hn-orange text-white hover:bg-hn-orange/90 rounded-md text-sm font-medium transition-colors flex items-center gap-2">
-                      Load More
-                      {(isFetchingIds || isFetchingStories) && (
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                      )}
-                    </button>
+                    <nav className="flex items-center gap-1.5 sm:gap-1.5">
+                      {/* Previous button */}
+                      <button 
+                        className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg border transition-colors text-sm sm:text-base ${
+                          currentPage === 1 || isFetchingIds || isFetchingStories 
+                          ? 'text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white border-gray-200 dark:border-gray-700'
+                        }`}
+                        onClick={goToPrevPage}
+                        disabled={currentPage === 1 || isFetchingIds || isFetchingStories}
+                        aria-label="Previous page"
+                      >
+                        <span>&lt;</span>
+                      </button>
+
+                      {/* Page numbers - Simplified for mobile */}
+                      {getPageNumbers().map((page, index) => {
+                        // On mobile, only show ellipsis and certain pages
+                        const isMobileHidden = typeof page === 'number' && 
+                                             page !== 1 && 
+                                             page !== totalPages && 
+                                             Math.abs(currentPage - (page as number)) > 1;
+                        
+                        return (
+                          page === 'ellipsis-start' || page === 'ellipsis-end' ? (
+                            <span 
+                              key={`ellipsis-${index}`} 
+                              className={`hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center text-gray-500 dark:text-gray-400`}
+                            >
+                              &hellip;
+                            </span>
+                          ) : (
+                            <button
+                              key={`page-${page}`}
+                              className={`${isMobileHidden ? 'hidden sm:flex' : 'flex'} w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg transition-colors text-sm sm:text-base ${
+                                currentPage === page
+                                  ? 'bg-hn-orange text-white hover:bg-hn-orange-dark'
+                                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200 text-gray-700 dark:text-white border border-gray-200 dark:border-gray-700'
+                              }`}
+                              onClick={() => goToPage(page as number)}
+                              disabled={isFetchingIds || isFetchingStories}
+                              aria-label={`Page ${page}`}
+                              aria-current={currentPage === page ? 'page' : undefined}
+                            >
+                              {page}
+                            </button>
+                          )
+                        );
+                      })}
+
+                      {/* Next button */}
+                      <button 
+                        className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg border transition-colors text-sm sm:text-base ${
+                          currentPage === totalPages || isFetchingIds || isFetchingStories
+                          ? 'text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 cursor-not-allowed' 
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white border-gray-200 dark:border-gray-700'
+                        }`}
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages || isFetchingIds || isFetchingStories}
+                        aria-label="Next page"
+                      >
+                        <span>&gt;</span>
+                        {(isFetchingIds || isFetchingStories) && (
+                          <RefreshCw className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin ml-1" />
+                        )}
+                      </button>
+                    </nav>
                   </div>
                 )}
 

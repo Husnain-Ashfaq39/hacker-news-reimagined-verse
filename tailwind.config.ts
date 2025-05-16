@@ -215,6 +215,14 @@ export default {
 						transform: 'translate(0, 25px) scale(0)',
 						opacity: '0'
 					}
+				},
+				'shimmer': {
+					'0%': {
+						backgroundPosition: '-200% 0'
+					},
+					'100%': {
+						backgroundPosition: '200% 0'
+					}
 				}
 			},
 			animation: {
@@ -229,7 +237,8 @@ export default {
 				'particle-3': 'particle-move-3 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards',
 				'particle-4': 'particle-move-4 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards',
 				'particle-5': 'particle-move-5 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards',
-				'particle-6': 'particle-move-6 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards'
+				'particle-6': 'particle-move-6 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards',
+				'shimmer': 'shimmer 3s linear infinite'
 			},
 			fontFamily: {
 				sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
