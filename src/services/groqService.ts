@@ -18,10 +18,19 @@ interface SummaryData {
   userId?: string; // Optional: to associate summaries with users if needed
 }
 
+// Define the usage tracking data structure
+interface SummaryUsage {
+  $id?: string;
+  userId: string;
+  date: string; // YYYY-MM-DD format
+  count: number;
+}
+
 export class GroqService {
   private static API_URL = import.meta.env.VITE_GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions';
   private static API_KEY = import.meta.env.VITE_GROQ_API_KEY;
   private static MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama3-70b-8192';
+  private static DAILY_LIMIT = 10; // Maximum summaries per day
 
   /**
    * Generates a unique ID for summary sharing
@@ -32,12 +41,116 @@ export class GroqService {
   }
 
   /**
+   * Get today's date in YYYY-MM-DD format
+   */
+  private static getTodayDateString(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // YYYY-MM-DD
+  }
+
+  /**
+   * Check if user has reached daily limit
+   * @param userId The user ID to check
+   * @returns boolean indicating if limit is reached and the current count
+   */
+  public static async checkDailyLimit(userId: string): Promise<{limitReached: boolean, currentCount: number}> {
+    try {
+      if (!userId) {
+        return { limitReached: true, currentCount: 0 };
+      }
+      
+      const today = this.getTodayDateString();
+      
+      // Try to get today's usage for this user
+      const usageList = await db.SummaryUsages.list([
+        Query.equal('userId', userId),
+        Query.equal('date', today)
+      ]);
+      
+      // If no record exists, user hasn't used any summaries today
+      if (!usageList.documents || usageList.documents.length === 0) {
+        return { limitReached: false, currentCount: 0 };
+      }
+      
+      // Check if user has reached limit
+      const usage = usageList.documents[0] as SummaryUsage;
+      return { 
+        limitReached: usage.count >= this.DAILY_LIMIT,
+        currentCount: usage.count
+      };
+    } catch (error) {
+      console.error('Error checking daily limit:', error);
+      // In case of error, default to limiting access
+      return { limitReached: true, currentCount: 0 };
+    }
+  }
+
+  /**
+   * Track summary usage for a user
+   * @param userId The user ID to track
+   * @returns Success status
+   */
+  private static async trackSummaryUsage(userId: string): Promise<boolean> {
+    try {
+      if (!userId) return false;
+      
+      const today = this.getTodayDateString();
+      
+      // Try to find existing usage record for today
+      const usageList = await db.SummaryUsages.list([
+        Query.equal('userId', userId),
+        Query.equal('date', today)
+      ]);
+      
+      // If usage record exists, increment count
+      if (usageList.documents && usageList.documents.length > 0) {
+        const usage = usageList.documents[0] as SummaryUsage;
+        await db.SummaryUsages.update(usage.$id as string, {
+          count: usage.count + 1
+        });
+      } else {
+        // Create new usage record
+        await db.SummaryUsages.create({
+          userId,
+          date: today,
+          count: 1
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error tracking summary usage:', error);
+      return false;
+    }
+  }
+
+  /**
    * Generates a summary of multiple news stories using the Groq API
    * @param stories - Array of news stories to summarize
+   * @param userId - User ID for tracking and limiting
    * @returns A promise that resolves to the summary response
    */
-  public static async generateNewsSummary(stories: Story[]): Promise<SummaryResponse> {
+  public static async generateNewsSummary(stories: Story[], userId?: string): Promise<SummaryResponse> {
     try {
+      // Check if user is authenticated
+      if (!userId) {
+        return {
+          summary: '',
+          status: 'error',
+          message: 'Authentication required. Please log in to generate summaries.'
+        };
+      }
+      
+      // Check if user has reached daily limit
+      const { limitReached, currentCount } = await this.checkDailyLimit(userId);
+      if (limitReached) {
+        return {
+          summary: '',
+          status: 'error',
+          message: `Daily limit reached. You've used ${currentCount} of ${this.DAILY_LIMIT} summaries today.`
+        };
+      }
+
       if (!this.API_KEY) {
         throw new Error('Groq API key is not configured');
       }
@@ -105,12 +218,15 @@ Important formatting guidance:
       const summary = data.choices[0].message.content;
 
       try {
+        // Track usage
+        await this.trackSummaryUsage(userId);
+        
         // Save the summary directly to Appwrite database
         const summaryData = {
           summary,
           timestamp: Math.floor(Date.now() / 1000), // Convert to seconds from milliseconds
           storyCount: stories.length,
-          // You can add userId here if the user is authenticated
+          userId // Associate summary with user
         };
         
         // Log the data we're about to send

@@ -7,22 +7,27 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogTrigger,
+  DialogDescription
 } from '@/components/ui/dialog';
-import { Sparkles, RefreshCw, AlertCircle, Copy, CheckCircle2 } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertCircle, Copy, CheckCircle2, Lock } from 'lucide-react';
 import { ShareSummary } from '@/components/ShareSummary';
+import { useAuthStore } from '@/store/authStore';
+import { Link } from 'react-router-dom';
 
 interface NewsSummaryProps {
   stories: Story[];
 }
 
 export function NewsSummary({ stories }: NewsSummaryProps) {
+  const { user } = useAuthStore();
   const [summary, setSummary] = useState<string>('');
   const [summary$id, setSummary$id] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{currentCount: number; dailyLimit: number} | null>(null);
 
   // Format the summary text to improve readability
   const formatSummary = (text: string) => {
@@ -59,9 +64,41 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
     return formatted;
   };
 
+  // Check user's daily usage limit
+  const checkUsageLimit = async () => {
+    if (!user || !user.$id) {
+      return false;
+    }
+    
+    try {
+      const { limitReached, currentCount } = await GroqService.checkDailyLimit(user.$id);
+      setUsageInfo({
+        currentCount,
+        dailyLimit: 10 // Should match the limit in GroqService
+      });
+      return !limitReached;
+    } catch (err) {
+      console.error('Error checking usage limit:', err);
+      return false;
+    }
+  };
+
   const generateSummary = async () => {
     if (stories.length === 0) {
       setError('No stories available to summarize.');
+      return;
+    }
+
+    // Check if user is logged in
+    if (!user) {
+      setError('Please log in to generate summaries.');
+      return;
+    }
+
+    // Check usage limit
+    const canGenerate = await checkUsageLimit();
+    if (!canGenerate) {
+      setError(`You've reached your daily limit of 10 summaries. Please try again tomorrow.`);
       return;
     }
 
@@ -69,12 +106,15 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
     setError(null);
 
     try {
-      const response = await GroqService.generateNewsSummary(stories);
+      const response = await GroqService.generateNewsSummary(stories, user.$id);
       console.log(response);
       
       if (response.status === 'success') {
         setSummary(response.summary);
         setIsLoading(false);
+        
+        // Refresh usage count after generating summary
+        await checkUsageLimit();
         
         // Save summary ID for sharing
         if (response.$id) {
@@ -82,10 +122,12 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
         }
       } else {
         setError(response.message || 'Failed to generate summary.');
+        setIsLoading(false);
       }
     } catch (err) {
       setError('An unexpected error occurred while generating the summary.');
       console.error('Summary generation error:', err);
+      setIsLoading(false);
     }
   };
 
@@ -112,10 +154,16 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
           variant="outline" 
           className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-hn-orange/10 to-blue-500/10 hover:from-hn-orange/20 hover:to-blue-500/20"
           onClick={() => {
-            if (!summary) {
+            if (!user) {
+              // Show login requirement
+              setError('Please log in to generate summaries.');
+              setIsOpen(true);
+            } else if (!summary) {
               generateSummary();
+              setIsOpen(true);
+            } else {
+              setIsOpen(true);
             }
-            setIsOpen(true);
           }}
         >
           <Sparkles className="h-4 w-4 text-hn-orange" />
@@ -128,6 +176,11 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
             <Sparkles className="h-5 w-5 text-hn-orange" />
             News Summary
           </DialogTitle>
+          {usageInfo && user && (
+            <DialogDescription className="text-xs mt-1">
+              You've used {usageInfo.currentCount} of {usageInfo.dailyLimit} summaries today
+            </DialogDescription>
+          )}
         </DialogHeader>
         
         <div className="mt-4">
@@ -138,11 +191,31 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
               <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-              <div>
-                <p className="font-medium">Error generating summary</p>
-                <p className="text-sm mt-1">{error}</p>
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex flex-col items-start gap-3">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Error generating summary</p>
+                  <p className="text-sm mt-1">{error}</p>
+                </div>
+              </div>
+              
+              {!user && (
+                <div className="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-md">
+                  <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                    <Lock className="h-4 w-4" />
+                    <span>Authentication Required</span>
+                  </div>
+                  <p className="text-xs text-slate-600 mb-3">
+                    Please log in to generate summaries. Each user can generate up to 10 summaries per day.
+                  </p>
+                  <Button asChild size="sm" className="w-full">
+                    <Link to="/login">Log in with Google</Link>
+                  </Button>
+                </div>
+              )}
+              
+              {user && (
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -151,7 +224,7 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
                 >
                   Try Again
                 </Button>
-              </div>
+              )}
             </div>
           ) : summary ? (
             <div className="prose prose-sm max-w-none">
@@ -207,13 +280,30 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">Click generate to summarize the current news stories</p>
-              <Button 
-                className="mt-4" 
-                onClick={generateSummary}
-              >
-                Generate Summary
-              </Button>
+              {user ? (
+                <>
+                  <p className="text-sm text-muted-foreground">Click generate to summarize the current news stories</p>
+                  <Button 
+                    className="mt-4" 
+                    onClick={generateSummary}
+                  >
+                    Generate Summary
+                  </Button>
+                </>
+              ) : (
+                <div className="w-full p-4 bg-slate-50 border border-slate-200 rounded-md">
+                  <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                    <Lock className="h-4 w-4" />
+                    <span>Authentication Required</span>
+                  </div>
+                  <p className="text-xs text-slate-600 mb-3">
+                    Please log in to generate summaries. Each user can generate up to 10 summaries per day.
+                  </p>
+                  <Button asChild size="sm" className="w-full">
+                    <Link to="/login">Log in with Google</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
