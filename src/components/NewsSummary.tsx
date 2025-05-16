@@ -195,25 +195,12 @@ export function NewsSummary({ stories }: NewsSummaryProps) {
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
                 <div>
-                  <p className="font-medium">Error generating summary</p>
+                  <p className="font-medium">Access Restricted</p>
                   <p className="text-sm mt-1">{error}</p>
                 </div>
               </div>
               
-              {!user && (
-                <div className="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-md">
-                  <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <Lock className="h-4 w-4" />
-                    <span>Authentication Required</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Please log in to generate summaries. Each user can generate up to 10 summaries per day.
-                  </p>
-                  <Button asChild size="sm" className="w-full">
-                    <Link to="/login">Log in with Google</Link>
-                  </Button>
-                </div>
-              )}
+              
               
               {user && (
                 <Button 
