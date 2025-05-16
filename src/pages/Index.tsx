@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { PageLayout } from "@/components/PageLayout";
 import { FilterBar } from "@/components/FilterBar";
-import { StoryCard } from "@/components/StoryCard";
 import { TrendingTags } from "@/components/TrendingTags";
-import { PromotedStory } from "@/components/PromotedStory";
 import { Story } from "@/services/hnService";
 import { UserTooltip } from "@/components/UserTooltip";
 import { Link } from "react-router-dom";
@@ -12,7 +10,12 @@ import { Database, RefreshCw, WifiOff, LayoutDashboard, X, Bookmark } from "luci
 import { authService } from "@/services/appwrite/auth.service";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
-import { NewsSummary } from "@/components/NewsSummary";
+// Import lazy components instead of direct imports
+import { 
+  StoryCardWithSuspense as StoryCard,
+  PromotedStoryWithSuspense as PromotedStory, 
+  NewsSummaryWithSuspense as NewsSummary 
+} from "@/components/lazyComponents";
 
 // Key for localStorage
 const SAVED_STORIES_KEY = "hn_saved_stories";
@@ -192,22 +195,43 @@ const Index = () => {
     return date.toLocaleTimeString();
   };
 
+  // Create skelton array for loading state
+  const skeletonArray = Array(10).fill(0);
+
   return (
     <PageLayout>
       <div className="container py-8">
         {/* Mobile view for Generate Summary and Trending Tags */}
         <div className="lg:hidden space-y-4 mb-6">
-          <NewsSummary stories={storiesData as Story[]} />
-          <TrendingTags 
-            stories={typedStoriesData} 
-            onTagClick={handleTagClick}
-            selectedTags={selectedTags}
-          />
+          {loading && !storiesData.length ? (
+            <>
+              
+              
+              {/* Mobile TrendingTags skeleton */}
+              <div className="bg-card rounded-lg border p-4 space-y-3">
+                <div className="h-6 bg-muted rounded-md w-2/5 animate-pulse"></div>
+                <div className="flex flex-wrap gap-2">
+                  {[1,2,3,4,5,6].map(i => (
+                    <div key={i} className="h-6 w-16 bg-muted rounded-full animate-pulse"></div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <NewsSummary stories={storiesData as Story[]} />
+              <TrendingTags 
+                stories={typedStoriesData} 
+                onTagClick={handleTagClick}
+                selectedTags={selectedTags}
+              />
+            </>
+          )}
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-y-3">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">
                   {showSavedOnly ? 'Saved Stories' : 'All Stories'}
@@ -228,38 +252,13 @@ const Index = () => {
                 </Button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-auto">
                 <FilterBar
                   onFilterChange={() => {}} // Empty function since we're not using filters anymore
                   onSortChange={handleSortChange}
                   onTimeChange={setTimeRange}
                   showTitle={false}
                 />
-                
-                {!isOnline && (
-                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
-                    <WifiOff className="h-3 w-3 mr-1" />
-                    Offline Mode
-                  </div>
-                )}
-                {isFromCache && (
-                  <div className="flex items-center text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                    <Database className="h-3 w-3 mr-1" />
-                    Cached data {cacheSizeKB !== null && `(${cacheSizeKB} KB)`}
-                    <span className="ml-1 text-gray-500 text-[10px]">
-                      Last updated:{" "}
-                      {formatUpdatedTime(
-                        Math.max(storyIdsUpdatedAt || 0, storiesUpdatedAt || 0)
-                      )}
-                    </span>
-                  </div>
-                )}
-                {(isFetchingIds || isFetchingStories) && (
-                  <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
-                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                    Refreshing data...
-                  </div>
-                )}
               </div>
             </div>
 
@@ -307,14 +306,59 @@ const Index = () => {
             )}
 
             {loading && !storiesData.length && !showSavedOnly ? (
-              <div className="text-center py-12">
-                <div
-                  className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-hn-orange border-r-transparent"
-                  role="status"
-                >
-                  <span className="sr-only">Loading...</span>
+              <div className="space-y-6">
+                {/* Promoted story skeleton */}
+                <div className="bg-card rounded-lg border overflow-hidden">
+                  <div className="relative h-48 bg-gradient-to-br from-muted to-muted/50 animate-pulse"></div>
+                  <div className="p-5">
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center pr-3 border-r">
+                        <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
+                        <div className="h-4 w-6 mt-1 bg-muted rounded-md animate-pulse"></div>
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div className="h-6 bg-muted rounded-md w-4/5 animate-pulse"></div>
+                        <div className="h-4 bg-muted rounded-md w-2/4 animate-pulse"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted rounded-md w-full animate-pulse"></div>
+                          <div className="h-4 bg-muted rounded-md w-11/12 animate-pulse"></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="h-4 w-24 bg-muted rounded-full animate-pulse"></div>
+                          <div className="h-4 w-16 bg-muted rounded-full animate-pulse"></div>
+                          <div className="h-4 w-20 bg-muted rounded-full animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="mt-4 text-muted-foreground">Loading stories...</p>
+
+                {/* Story cards skeletons */}
+                <div className="space-y-4">
+                  {skeletonArray.map((_, index) => (
+                    <div key={index} className="bg-card rounded-lg border p-4">
+                      <div className="flex gap-3">
+                        <div className="flex flex-col items-center pr-3 border-r">
+                          <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
+                          <div className="h-4 w-6 mt-1 bg-muted rounded-md animate-pulse"></div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-5 bg-muted rounded-md w-4/5 animate-pulse"></div>
+                          <div className="h-3 bg-muted rounded-md w-1/4 animate-pulse"></div>
+                          <div className="space-y-1">
+                            <div className="h-3 bg-muted rounded-md w-3/4 animate-pulse"></div>
+                            <div className="h-3 bg-muted rounded-md w-1/2 animate-pulse"></div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="h-3 w-16 bg-muted rounded-full animate-pulse"></div>
+                            <div className="h-3 w-16 bg-muted rounded-full animate-pulse"></div>
+                            <div className="h-3 w-16 bg-muted rounded-full animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : error && !showSavedOnly ? (
               <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
@@ -382,45 +426,89 @@ const Index = () => {
           </div>
 
           <div className="hidden lg:block space-y-6">
-            <NewsSummary stories={storiesData as Story[]} />
-            
-            <TrendingTags 
-              stories={typedStoriesData} 
-              onTagClick={handleTagClick}
-              selectedTags={selectedTags}
-            />
-
-            <div className="bg-card rounded-lg border p-4">
-              <h3 className="font-medium mb-3">Top Contributors</h3>
-              <div className="space-y-3">
-                {topContributors.map((user, index) => (
-                  <div key={user} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-hn-orange/10 text-hn-orange rounded-full flex items-center justify-center font-medium">
-                        {user.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <UserTooltip username={user}>
-                          <Link
-                            to={`/user/${user}`}
-                            className="font-medium text-sm hover:text-hn-orange"
-                          >
-                            {user}
-                          </Link>
-                        </UserTooltip>
-                        <div className="text-xs text-muted-foreground">
-                          {/* Karma will be loaded in the tooltip */}
-                          Top contributor
+            {loading && !storiesData.length ? (
+              <>
+                {/* NewsSummary skeleton */}
+                <div className="bg-card rounded-lg border p-4 space-y-3">
+                  <div className="h-6 bg-muted rounded-md w-1/2 animate-pulse"></div>
+                  <div className="h-4 bg-muted rounded-md w-full animate-pulse"></div>
+                  <div className="h-4 bg-muted rounded-md w-5/6 animate-pulse"></div>
+                  <div className="h-4 bg-muted rounded-md w-4/5 animate-pulse"></div>
+                  <div className="flex justify-end">
+                    <div className="h-8 w-24 bg-muted rounded-md animate-pulse"></div>
+                  </div>
+                </div>
+                
+                {/* TrendingTags skeleton */}
+                <div className="bg-card rounded-lg border p-4 space-y-3">
+                  <div className="h-6 bg-muted rounded-md w-2/5 animate-pulse"></div>
+                  <div className="flex flex-wrap gap-2">
+                    {[1,2,3,4,5,6,7,8].map(i => (
+                      <div key={i} className="h-6 w-16 bg-muted rounded-full animate-pulse"></div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Top Contributors skeleton */}
+                <div className="bg-card rounded-lg border p-4 space-y-3">
+                  <div className="h-6 bg-muted rounded-md w-2/5 animate-pulse"></div>
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
+                        <div className="space-y-1">
+                          <div className="h-4 w-20 bg-muted rounded-md animate-pulse"></div>
+                          <div className="h-3 w-24 bg-muted rounded-md animate-pulse"></div>
                         </div>
                       </div>
+                      <div className="h-4 w-6 bg-muted rounded-full animate-pulse"></div>
                     </div>
-                    <div className="text-xs bg-muted px-2 py-1 rounded-full">
-                      #{index + 1}
-                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <NewsSummary stories={storiesData as Story[]} />
+                
+                <TrendingTags 
+                  stories={typedStoriesData} 
+                  onTagClick={handleTagClick}
+                  selectedTags={selectedTags}
+                />
+
+                <div className="bg-card rounded-lg border p-4">
+                  <h3 className="font-medium mb-3">Top Contributors</h3>
+                  <div className="space-y-3">
+                    {topContributors.map((user, index) => (
+                      <div key={user} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-hn-orange/10 text-hn-orange rounded-full flex items-center justify-center font-medium">
+                            {user.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <UserTooltip username={user}>
+                              <Link
+                                to={`/user/${user}`}
+                                className="font-medium text-sm hover:text-hn-orange"
+                              >
+                                {user}
+                              </Link>
+                            </UserTooltip>
+                            <div className="text-xs text-muted-foreground">
+                              {/* Karma will be loaded in the tooltip */}
+                              Top contributor
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-xs bg-muted px-2 py-1 rounded-full">
+                          #{index + 1}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -4,15 +4,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Comments from "./pages/Comments";
-import NotFound from "./pages/NotFound";
-import { UserDashboard } from "./pages/UserDashboard";
-import { SharedSummary } from "./pages/SharedSummary";
-import SearchResults from "./pages/SearchResults";
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+
+// Lazy load page components
+const Index = lazy(() => import("./pages/Index"));
+const Comments = lazy(() => import("./pages/Comments"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard").then(module => ({ default: module.UserDashboard })));
+const SharedSummary = lazy(() => import("./pages/SharedSummary").then(module => ({ default: module.SharedSummary })));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
 
 // Create persister to store cache in localStorage
 const localStoragePersister = createSyncStoragePersister({
@@ -72,31 +74,40 @@ const App = () => {
     return client;
   });
 
+  // Loading fallback component
+  const LoadingFallback = () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="h-8 w-8 border-4 border-t-hn-orange border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/newest" element={<Index />} />
-            <Route path="/ask" element={<Index />} />
-            <Route path="/show" element={<Index />} />
-            <Route path="/jobs" element={<Index />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/item/:id" element={<Comments />} />
-            <Route path="/user/:username" element={<Index />} />
-            <Route path="/from/:domain" element={<Index />} />
-            <Route path="/tag/:tag" element={<Index />} />
-            <Route path="/summary/:id" element={<SharedSummary />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/newest" element={<Index />} />
+              <Route path="/ask" element={<Index />} />
+              <Route path="/show" element={<Index />} />
+              <Route path="/jobs" element={<Index />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/item/:id" element={<Comments />} />
+              <Route path="/user/:username" element={<Index />} />
+              <Route path="/from/:domain" element={<Index />} />
+              <Route path="/tag/:tag" element={<Index />} />
+              <Route path="/summary/:id" element={<SharedSummary />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
       {/* Add React Query Devtools for development environment */}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 };

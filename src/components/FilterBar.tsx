@@ -49,7 +49,10 @@ export function FilterBar({
   ];
   
   return (
-    <div className={showTitle ? "mb-6 space-y-4" : ""}>
+    <div className={cn(
+      showTitle ? "mb-6 space-y-4" : "",
+      "md:ml-0 ml-4"
+    )}>
       <div className="flex items-center justify-between">
         {showTitle && (
           <h2 className="text-xl font-semibold">

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
@@ -8,6 +8,11 @@ import {
   LogOut,
   Activity,
   LayoutDashboard,
+  Home,
+  Briefcase,
+  ChevronsUp,
+  FileText,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,11 +50,12 @@ import { useHotkeys } from 'react-hotkeys-hook';
 
 export function MainNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isLoading, signOut, checkUserSession } = useAuthStore();
+  const { user, isLoading, signOut } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Story[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Fetch stories for search
   const { data: storyIds = [] } = useStoryIds("top");
@@ -60,6 +66,11 @@ export function MainNav() {
     e.preventDefault();
     setIsSearchOpen(true);
   });
+  
+  // Close mobile menu when navigating
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
   
   // Perform search when query changes
   useEffect(() => {
@@ -98,12 +109,12 @@ export function MainNav() {
 
   // Update searchQuery when URL has a search parameter
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(location.search);
     const queryParam = urlParams.get('q');
-    if (queryParam) {
+    if (queryParam && queryParam !== searchQuery) {
       setSearchQuery(queryParam);
     }
-  }, [window.location.search]);
+  }, [location.search, searchQuery]);
 
   return (
     <>
@@ -254,14 +265,121 @@ export function MainNav() {
         </div>
       </header>
       
+      {/* Mobile Sidebar */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="fixed inset-0 bg-black/30" onClick={() => setIsMenuOpen(false)} />
+          <div className="fixed inset-y-0 left-0 w-3/4 max-w-xs bg-background p-4 shadow-lg overflow-y-auto">
+            <div className="flex flex-col space-y-6">
+              <div className="flex items-center justify-between">
+                <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
+                  <div className="bg-hn-orange text-white font-bold h-7 w-7 rounded flex items-center justify-center">
+                    HN
+                  </div>
+                  <span className="font-semibold text-lg">Hacker News</span>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              
+              {user && (
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user.profile_url} alt={user.name} />
+                    <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+              )}
+              
+              <nav className="flex flex-col space-y-1">
+                <Link 
+                  to="/" 
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Home className="h-5 w-5 text-hn-orange" />
+                  <span>Home</span>
+                </Link>
+                <Link 
+                  to="/newest" 
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <ChevronsUp className="h-5 w-5 text-hn-orange" />
+                  <span>New Stories</span>
+                </Link>
+                <Link 
+                  to="/jobs" 
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Briefcase className="h-5 w-5 text-hn-orange" />
+                  <span>Jobs</span>
+                </Link>
+                <Link 
+                  to="/dashboard" 
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LayoutDashboard className="h-5 w-5 text-hn-orange" />
+                  <span>Dashboard</span>
+                </Link>
+              </nav>
+              
+              <div className="pt-4 border-t">
+                {user ? (
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    onClick={() => {
+                      signOut();
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                ) : (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-hn-orange hover:bg-hn-orange/90">
+                        Sign In
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader />
+                      <Login3
+                        heading="Welcome"
+                        subheading="Continue with Google"
+                        googleText="Continue with Google"
+                        logo={{
+                          url: "#",
+                          src: "https://shadcnblocks.com/images/block/logos/shadcnblockscom-icon.svg",
+                          alt: "Logo",
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Search Command Menu */}
       <CommandDialog 
         open={isSearchOpen} 
         onOpenChange={(open) => {
           setIsSearchOpen(open);
           if (!open) {
-            // Reset only if not navigating directly to search page
-            if (!searchQuery.trim() || !window.location.pathname.includes('/search')) {
+            // Only reset when closing if not on search page and not navigating to a search
+            if (!searchQuery.trim() || !location.pathname.includes('/search')) {
               setSearchQuery('');
             }
           }

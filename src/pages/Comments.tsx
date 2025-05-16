@@ -14,7 +14,7 @@ import {
 import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CommentItem } from "@/components/CommentItem";
+import { CommentItemWithSuspense as CommentItem } from "@/components/lazyComponents";
 import { UserTooltip } from "@/components/UserTooltip";
 import { Comment, Story } from "@/services/hnService";
 import { useStoryWithComments } from "@/hooks/useHnQueries";
