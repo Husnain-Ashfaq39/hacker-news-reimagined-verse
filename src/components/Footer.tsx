@@ -1,6 +1,5 @@
-
 import { Link } from "react-router-dom";
-import { Github, Twitter } from "lucide-react";
+import { Github, Twitter, Code } from "lucide-react";
 
 export function Footer() {
   return (
@@ -63,6 +62,17 @@ export function Footer() {
                     <span>Twitter</span>
                   </a>
                 </li>
+                <li>
+                  <a 
+                    href="https://syntax-ai.tech/" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-hn-orange inline-flex items-center gap-2"
+                  >
+                    <Code className="h-4 w-4" />
+                    <span>Syntax AI</span>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -70,7 +80,19 @@ export function Footer() {
         
         <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
           <p>This is a redesign concept. Original Hacker News content is owned and operated by Y Combinator.</p>
-          <p className="mt-1">© {new Date().getFullYear()} Hacker News</p>
+          <p className="mt-1">
+            © {new Date().getFullYear()} Hacker News | 
+            <span className="ml-1">
+              Developed by <a 
+                href="https://syntax-ai.tech/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-hn-orange hover:underline"
+              >
+                Syntax
+              </a>
+            </span>
+          </p>
         </div>
       </div>
     </footer>

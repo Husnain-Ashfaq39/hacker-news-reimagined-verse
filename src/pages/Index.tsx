@@ -10,6 +10,7 @@ import { Database, RefreshCw, WifiOff, LayoutDashboard, X, Bookmark } from "luci
 import { authService } from "@/services/appwrite/auth.service";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { FeedbackForm } from "@/components/FeedbackForm";
 // Import lazy components instead of direct imports
 import { 
   StoryCardWithSuspense as StoryCard,
@@ -19,6 +20,9 @@ import {
 
 // Key for localStorage
 const SAVED_STORIES_KEY = "hn_saved_stories";
+const FEEDBACK_SHOWN_KEY = "hn_feedback_shown";
+const LAST_FEEDBACK_DATE_KEY = "hn_last_feedback_date";
+const VISIT_COUNT_KEY = "hn_visit_count";
 
 const Index = () => {
   const [sort, setSort] = useState<"top" | "new">("top");
@@ -29,19 +33,47 @@ const Index = () => {
   const [savedStories, setSavedStories] = useState<Story[]>([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [visitCount, setVisitCount] = useState(0);
   const storiesPerPage = 20;
   const storyOffset = (currentPage - 1) * storiesPerPage;
 
   // Load saved stories from localStorage on component mount
   useEffect(() => {
     try {
+      // Load saved stories
       const savedStoriesJson = localStorage.getItem(SAVED_STORIES_KEY);
       if (savedStoriesJson) {
         const parsedStories = JSON.parse(savedStoriesJson);
         setSavedStories(parsedStories);
       }
+
+      // Check visit count and increment
+      const storedVisitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || "0", 10);
+      const newVisitCount = storedVisitCount + 1;
+      setVisitCount(newVisitCount);
+      localStorage.setItem(VISIT_COUNT_KEY, newVisitCount.toString());
+
+      // Check if feedback has been shown recently
+      const lastFeedbackDate = localStorage.getItem(LAST_FEEDBACK_DATE_KEY);
+      const feedbackShown = localStorage.getItem(FEEDBACK_SHOWN_KEY) === "true";
+      
+      // Show feedback if:
+      // 1. User has visited the site at least 3 times
+      // 2. AND either feedback has never been shown OR it's been at least 30 days since last feedback
+      const shouldShowFeedback = newVisitCount >= 3 && 
+        (!feedbackShown || 
+         (lastFeedbackDate && (Date.now() - new Date(lastFeedbackDate).getTime() > 30 * 24 * 60 * 60 * 1000)));
+      
+      setShowFeedback(shouldShowFeedback);
+      
+      // If we're showing feedback, mark it as shown
+      if (shouldShowFeedback) {
+        localStorage.setItem(FEEDBACK_SHOWN_KEY, "true");
+        localStorage.setItem(LAST_FEEDBACK_DATE_KEY, new Date().toISOString());
+      }
     } catch (err) {
-      console.error("Error loading saved stories from localStorage:", err);
+      console.error("Error loading data from localStorage:", err);
     }
   }, []);
 
@@ -640,6 +672,7 @@ const Index = () => {
           </div>
         </div>
       </div>
+      {showFeedback && <FeedbackForm />}
     </PageLayout>
   );
 };

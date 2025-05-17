@@ -10,5 +10,9 @@ export const collections = [
     {
       id: "6826fdb80017986441d5",
       name: "SummaryUsages",
+    },
+    {
+      id: "68288ffc003a0b56a883",
+      name: "Feedback",
     }
   ];
